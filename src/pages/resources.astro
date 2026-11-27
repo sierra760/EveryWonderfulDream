@@ -1,0 +1,269 @@
+---
+import Base from '../layouts/Base.astro';
+
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+
+interface Item { title: string; by: string; url?: string; note: string }
+interface Group { id: string; title: string; intro: string; items: Item[] }
+
+const groups: Group[] = [
+  {
+    id: 'start',
+    title: 'Start here',
+    intro: 'Kim Stringfellow’s Jackrabbit Homestead follows the Small Tract Act through the Morongo Basin.',
+    items: [
+      { title: 'Jackrabbit Homestead', by: 'Kim Stringfellow', url: 'https://jackrabbithomestead.com/', note: 'The project’s home: photographs, essays, the book and the audio tour, tracing the Act across the Morongo Basin.' },
+      { title: 'A history primer', by: 'Kim Stringfellow', url: 'https://jackrabbithomestead.com/primer/', note: 'A short illustrated history of jackrabbit homesteading, generous with period voices.' },
+      { title: 'The audio tour', by: 'Kim Stringfellow, with the Twentynine Palms Historical Society', url: 'https://soundcloud.com/kstringfellow/jrhs_complete', note: 'A self-guided car tour of Wonder Valley from 2009, with residents, a geographer and artists talking as you drive.' },
+      { title: 'Jackrabbits, Ghost Grids and LandBanking+', by: 'Kim Stringfellow, Artbound, 2020', url: 'https://www.pbssocal.org/shows/artbound/jackrabbits-ghost-grids-and-landbanking', note: 'Includes the program’s national statistics and looks at the land schemes that followed.' },
+      { title: 'Artists, Off-Roaders, and the American Dream Writ Miniature', by: 'Kim Stringfellow, Artbound, 2012', url: 'https://pbssocal.org/shows/artbound/jackrabbit-homestead-artists-off-roaders-and-the-american-dream-writ-miniature', note: 'An essay and film on the cabins and the people who have taken them up again.' },
+    ],
+  },
+  {
+    id: 'voices',
+    title: 'Voices from the time',
+    intro: 'Desert Magazine followed the law from the week it passed. Every issue is scanned at the Internet Archive.',
+    items: [
+      { title: 'Here Are the Rules for the Five-Acre Tracts', by: 'Desert Magazine, August 1940', url: 'https://archive.org/details/Desert-Magazine-1940-08', note: 'The first regulations, printed in full for readers deciding whether to file.' },
+      { title: 'Jackrabbit Homesteader', by: 'Melissa Branson Stedman, Desert Magazine, December 1945', url: 'https://archive.org/details/Desert-Magazine-1945-12', note: 'A first-person account of filing in 1941 and building in Morongo Valley.' },
+      { title: 'Diary of a Jackrabbit Homesteader', by: 'Catherine Venn, Desert Magazine, July to December 1950', url: 'https://archive.org/details/Desert-Magazine-1950-07', note: 'A homesteader’s diary in six installments. She filed in January 1943.' },
+      { title: 'Just Between You and Me', by: 'Randall Henderson, Desert Magazine, December 1950', url: 'https://archive.org/details/Desert-Magazine-1950-12', note: 'The editor’s column on 12,000 leases, what a tract cost, and who ought not to bother.' },
+      { title: 'Mariana Ranchos', by: 'Desert Magazine, October 1954', url: 'https://archive.org/details/Desert-Magazine-1954-10', note: 'A cooperative colony of small tracts on one section of Apple Valley.' },
+    ],
+  },
+  {
+    id: 'now',
+    title: 'The valley now',
+    intro: 'Accounts of people living in the cabins and efforts to preserve or remove them.',
+    items: [
+      { title: 'A New Breed of Homesteader…', by: 'Richard Grant, Smithsonian, December 2026', url: 'https://www.smithsonianmag.com/history/new-breed-homsteader-turning-abandoned-shacks-previous-era-conmunity-desolation-california-180989840/', note: 'A long recent feature on the people living in Wonder Valley’s cabins today.' },
+      { title: 'Wonder Valley: Place and Paradox', by: 'Jacob Sowers', url: 'https://jackrabbithomestead.com/wonder-valley-place-and-paradox-sowers/', note: 'A cultural geographer on the valley’s three kinds of resident and how they see one another.' },
+      { title: 'Home: Finding Our Place', by: 'Chris Carraher, 2009', url: 'https://jackrabbithomestead.com/home-finding-our-place/', note: 'A Wonder Valley artist’s talk on what the cabins mean to the people who stayed.' },
+      { title: 'Homestead is where the art is', by: 'Wonder Valley Homestead Cabin Festival', url: 'https://homesteadcabin.wordpress.com/', note: 'The festival’s journal, 2008 to 2015.' },
+      { title: 'WonderValley.org', by: 'Community site', url: 'https://www.wondervalley.org/', note: 'Local news, meetings and a plain guide to the county’s cabin rules.' },
+      { title: 'Homesteader Legacy Leaves Desert Littered With Abandoned Shacks', by: 'Tom Verdin, Associated Press, November 2000', url: 'https://www.latimes.com/archives/la-xpm-2000-nov-05-me-47325-story.html', note: 'The clearest report on the shack-removal campaign and the grant that paid for it.' },
+      { title: 'Desert Jackrabbit Homesteads Inspire Artists', by: 'KPBS, November 2010', url: 'https://www.kpbs.org/news/arts-culture/2010/11/30/desert-jackrabbit-homesteads-inspire-artists', note: 'A radio conversation with Kim Stringfellow, with transcript.' },
+      { title: 'Jackrabbit Homesteads', by: 'SoCal Connected, PBS SoCal', url: 'https://pbssocal.org/shows/socal-connected/clip/jackrabbit-homesteads', note: 'A short television segment from the valley.' },
+      { title: 'Jackrabbit Homesteads', by: 'Brendan Collier, The Radavist, 2025', url: 'https://theradavist.com/jackrabbit-homesteads', note: 'A photo essay made from a bicycle.' },
+      { title: 'High Desert Test Sites', by: 'HDTS', url: 'https://www.hdts.site/history', note: 'The arts organization founded in 2002 that now looks after Andrea Zittel’s A-Z West.' },
+    ],
+  },
+  {
+    id: 'history',
+    title: 'Histories and scholarship',
+    intro: 'How land officials, historians, and residents describe what happened.',
+    items: [
+      { title: 'BLM and the Small Tract Act in the Southern California Desert: A Brief History', by: 'Lou Bellesi, Public Lands Foundation', url: 'https://publicland.org/plf-archives/35_archives/documents/doc_1306_bellesi.html', note: 'A retired BLM employee on what the agency got wrong, and what it changed in 1959.' },
+      { title: '“Jackrabbiting” Away from Urban Spaces', by: 'Julie Haltom, The Metropole, 2023', url: 'https://themetropole.blog/2023/08/29/jackrabbiting-away-from-urban-spaces/', note: 'A footnoted short history that reads the small tract as a flight from the city.' },
+      { title: 'Checkerboarding the Desert: Land in California’s East Mojave', by: 'Julia M. H. Sizek, UC Berkeley, 2022', url: 'https://escholarship.org/uc/item/1jn503nv', note: 'An ethnography of who owns the Mojave and how; it takes up the Small Tract Act.' },
+      { title: 'Wonder Valley', by: 'William Hillyard, UC Riverside, 2013', url: 'https://escholarship.org/uc/item/9958m228', note: 'Portraits of the valley’s residents; literature rather than history, and vivid.' },
+      { title: 'Homesteading in Twentynine Palms', by: 'Visit 29 Palms', url: 'https://visit29.org/historic-29/homesteading/', note: 'The local version, with Paul Witmer, Colonel Moore’s sales booth and the first cabins.' },
+      { title: 'Homesteaders', by: 'National Park Service, Joshua Tree', url: 'https://www.nps.gov/articles/homesteaders.htm', note: 'The older 160-acre homesteads in and around what became the national park.' },
+      { title: 'Dr. Luckie Study Center', by: 'National Park Service', url: 'https://www.nps.gov/jotr/learn/nature/dr-luckie-study-center.htm', note: 'On the doctor whose patients began it all.' },
+    ],
+  },
+  {
+    id: 'law',
+    title: 'The law',
+    intro: 'The original law, later changes, and county rules for surviving cabins.',
+    items: [
+      { title: 'Act of June 1, 1938 (52 Stat. 609)', by: 'Statutes at Large', url: 'https://www.govinfo.gov/link/statute/52/609', note: 'The original Act: one paragraph.' },
+      { title: 'Act of June 8, 1954 (68 Stat. 239)', by: 'Statutes at Large', url: 'https://www.govinfo.gov/link/statute/68/239', note: 'The rewrite that opened the program to organizations and reworded the mineral reservation.' },
+      { title: '43 U.S.C. 682a', by: 'Cornell Legal Information Institute', url: 'https://www.law.cornell.edu/uscode/text/43/682a', note: 'Where it sat in the United States Code, with the note of its repeal in 1976.' },
+      { title: 'Executive Order 9701', by: 'The American Presidency Project', url: 'https://www.presidency.ucsb.edu/documents/executive-order-9701-providing-for-the-reservation-rights-fissionable-materials-lands', note: 'Truman’s 1946 order reserving fissionable materials in public land disposals.' },
+      { title: 'Termination of Small Tract Classifications', by: 'Bureau of Land Management, Federal Register, February 27, 1998', url: 'https://www.govinfo.gov/content/pkg/FR-1998-02-27/html/98-5041.htm', note: 'Three real classification orders near Barstow and what became of them forty years on.' },
+      { title: 'Homestead/Recreational Cabins (IB-0004)', by: 'San Bernardino County Building and Safety', url: 'https://lus.sbcounty.gov/wp-content/uploads/sites/48/IB-0004-2025-Homestead-Rec-Cabins-Rev-11.19.25.pdf', note: 'What the county now requires of anyone who wants to live in a surviving cabin.' },
+      { title: 'Patent Easements', by: 'Maricopa County, Arizona', url: 'https://www.maricopa.gov/6446/Patent-Easements-DD-2015-09', note: 'A plain account of the road and utility strips reserved in small-tract patents.' },
+    ],
+  },
+  {
+    id: 'research',
+    title: 'Researching a tract',
+    intro: 'Use these records to trace a parcel or find the people named in a patent.',
+    items: [
+      { title: 'General Land Office Records', by: 'Bureau of Land Management', url: 'https://glorecords.blm.gov/', note: 'The scanned patent for every tract in this atlas. Search by name, by legal description, or by the accession number on the tract’s page.' },
+      { title: 'California GLO / BLM Land Patents', by: 'Larry Vredenburgh', url: 'https://vredenburgh.org/capatents/', note: 'BLM’s index of every California patent from 1856 to 1995, by county, obtained under the Freedom of Information Act. The source of the names and dates in this atlas.' },
+      { title: 'Accessing Land Entry Files', by: 'National Archives', url: 'https://www.archives.gov/research/land/accessing-land-entry-files', note: 'How to order the case file behind a patent. After 1908 the serial patent number is all you need.' },
+      { title: 'Serialized Land Entry Case Files, Los Angeles Land Office', by: 'National Archives at Riverside', url: 'https://catalog.archives.gov/id/579244', note: 'The cancelled and relinquished entries: the people who filed and gave up.' },
+      { title: 'Small Tract Registers, 1941–1961', by: 'National Archives at Riverside', url: 'https://catalog.archives.gov/id/4806282', note: 'Tract books and plats with applicants’ names; some entries have photographs.' },
+      { title: 'Index Cards to Serialized Land Entry Case Files', by: 'National Archives at Riverside', url: 'https://catalog.archives.gov/id/4763167', note: 'A name index to the Los Angeles case files, 1948 to 1956.' },
+      { title: 'Mineral & Land Records System', by: 'Bureau of Land Management', url: 'https://mlrs.blm.gov/s/', note: 'BLM’s case records, the source of this atlas’s tract data.' },
+      { title: 'Assessor-Recorder-County Clerk', by: 'San Bernardino County', url: 'https://arc.sbcounty.gov/', note: 'Everything after the patent: deeds, parcel maps and present ownership.' },
+      { title: 'Township and range tools', by: 'Earth Point', url: 'https://www.earthpoint.us/Townships.aspx', note: 'Turns a legal description into a place on a map, and back.' },
+    ],
+  },
+  {
+    id: 'print',
+    title: 'In print and in person',
+    intro: 'Books, local museums, and archives for research beyond the web.',
+    items: [
+      { title: 'Jackrabbit Homestead: Tracing the Small Tract Act in the Southern California Landscape, 1938–2008', by: 'Kim Stringfellow', url: 'https://www.lensculture.com/books/19857-jackrabbit-homestead-tracing-the-small-tract-act-in-the-southern-california-landscape-1938-2008', note: 'The book. First published by the Center for American Places in 2009; reissued by the author in 2023.' },
+      { title: 'Five Acres of Heaven', by: 'Ed Ainsworth, 1955', note: 'A promoter’s pamphlet and the fullest telling of how the law came about. Excerpted by Visit 29 Palms.' },
+      { title: 'Sand in My Shoe: Homestead Days in Twentynine Palms', by: 'Helen Bagley', note: 'A memoir of the homestead community before the small tracts.' },
+      { title: 'The Great California Deserts', by: 'W. Storrs Lee, 1963', note: 'Includes an eyewitness account of a 1957 small-tract auction.' },
+      { title: 'Small Tract Act: Hearings before a Special Subcommittee', by: 'U.S. House Committee on Interior and Insular Affairs, 1958', note: 'Testimony taken in San Bernardino and Los Angeles in October 1957. In federal depository libraries.' },
+      { title: 'Twentynine Palms Historical Society', by: 'Old Schoolhouse Museum, Twentynine Palms', note: 'Photographs, oral histories and the people who know. Its website was offline when this page was compiled.' },
+      { title: 'Morongo Basin Historical Society', by: 'Landers', url: 'https://mbhs.squarespace.com/', note: 'A museum and research center in the middle of Homestead Valley.' },
+    ],
+  },
+];
+---
+
+<Base title="Resources" description="Books, essays, archives, films and records about the jackrabbit homesteads and the Small Tract Act, and where to research a tract.">
+  <header class="page-hero wrap">
+    <p class="eyebrow">Resources</p>
+    <h1>Other people’s <em>work</em></h1>
+    <p class="lede">
+      This atlas maps the tracts. Others have photographed the cabins, interviewed residents, and read the
+      hearings. Alongside their work are primary sources and a guide to the records for researching a parcel.
+    </p>
+  </header>
+
+  <div class="wrap res">
+    <nav class="jump" aria-label="Resource sections">
+      <p class="label">Sections</p>
+      <ul>
+        {groups.map((g) => (<li><a href={`#${g.id}`}>{g.title}</a></li>))}
+      </ul>
+    </nav>
+    <div>
+      {groups.map((g) => (
+        <section class="group" id={g.id}>
+          <header>
+            <h2>{g.title}</h2>
+            <p>{g.intro}</p>
+          </header>
+          <ul class="items">
+            {g.items.map((it) => (
+              <li>
+                {it.url
+                  ? <a class="item" href={it.url} target="_blank" rel="noopener">
+                      <span class="t">{it.title} <span class="ext" aria-hidden="true">↗</span></span>
+                      <span class="by mono">{it.by}</span>
+                      <span class="note">{it.note}</span>
+                    </a>
+                  : <div class="item">
+                      <span class="t">{it.title}</span>
+                      <span class="by mono">{it.by}</span>
+                      <span class="note">{it.note}</span>
+                    </div>}
+              </li>
+            ))}
+          </ul>
+        </section>
+      ))}
+      <p class="tail">
+        For help checking a tract record, see <a href={`${base}/about/#corrections`}>documenting corrections</a>.
+      </p>
+    </div>
+  </div>
+</Base>
+
+<style>
+  .res {
+    display: grid;
+    grid-template-columns: 13rem minmax(0, 1fr);
+    gap: clamp(2rem, 6vw, 6rem);
+    padding-block: clamp(3rem, 7vw, 6rem);
+    align-items: start;
+  }
+  .jump {
+    position: sticky;
+    top: calc(var(--header-h) + 2rem);
+  }
+  .jump ul {
+    list-style: none;
+    margin: 1rem 0 0;
+    padding: 0;
+    display: grid;
+    gap: 0.55rem;
+    font-size: 0.98rem;
+  }
+  .jump a {
+    text-decoration: none;
+    color: var(--ink-2);
+  }
+  .jump a:hover {
+    color: var(--ochre);
+  }
+  .group + .group {
+    margin-top: clamp(3rem, 6vw, 5rem);
+  }
+  .group header {
+    display: grid;
+    gap: 0.7rem;
+    max-width: 40rem;
+    margin-bottom: 1.4rem;
+  }
+  .group h2 {
+    font-size: clamp(1.8rem, 1.3rem + 2vw, 2.8rem);
+  }
+  .group header p {
+    margin: 0;
+    color: var(--ink-2);
+  }
+  .items {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    border-top: 1px solid var(--ink);
+  }
+  .item {
+    display: grid;
+    grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+    gap: 0.25rem 2.5rem;
+    padding: 1.15rem 0;
+    border-bottom: 1px solid var(--rule);
+    text-decoration: none;
+    transition: background 0.2s, padding 0.3s var(--ease);
+  }
+  a.item:hover {
+    background: var(--paper-2);
+    padding-inline: 0.9rem;
+    color: inherit;
+  }
+  .item .t {
+    font-family: var(--font-display);
+    font-size: 1.28rem;
+    line-height: 1.2;
+  }
+  .item .ext {
+    font-family: var(--font-mono);
+    font-size: 0.7em;
+    color: var(--ochre);
+  }
+  .item .by {
+    grid-column: 1;
+    font-size: 0.66rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+  }
+  .item .note {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+    font-size: 0.96rem;
+    line-height: 1.45;
+    color: var(--ink-2);
+  }
+  .tail {
+    margin-top: 3rem;
+    color: var(--ink-3);
+  }
+  @media (max-width: 800px) {
+    .res {
+      grid-template-columns: 1fr;
+    }
+    .jump {
+      position: static;
+    }
+    .item {
+      grid-template-columns: 1fr;
+    }
+    .item .note {
+      grid-column: 1;
+      grid-row: auto;
+      margin-top: 0.3rem;
+    }
+  }
+</style>

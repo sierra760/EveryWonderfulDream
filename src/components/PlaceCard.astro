@@ -1,0 +1,97 @@
+---
+interface Props {
+  place: {
+    id: string; name: string; blurb: string; tracts: number; acres: number; medianYear: number | null;
+    dots: { w: number; h: number; p: number[] } | null;
+  };
+}
+const { place } = Astro.props;
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+const nf = new Intl.NumberFormat('en-US');
+const d = place.dots;
+// one path of unit squares: cheaper than thousands of <rect>s
+const path = d ? d.p.map((c) => `M${c % 1000},${Math.floor(c / 1000)}h1v1h-1z`).join('') : '';
+---
+
+<a class="place" href={`${base}/atlas/?place=${place.id}`}>
+  <div class="thumb" aria-hidden="true">
+    {d && (
+      <svg viewBox={`-2 -2 ${d.w + 5} ${d.h + 5}`} preserveAspectRatio="xMidYMid meet">
+        <path d={path} />
+      </svg>
+    )}
+  </div>
+  <div class="meta">
+    <h3>{place.name}</h3>
+    <p class="blurb">{place.blurb}</p>
+    <p class="stats mono">
+      <span>{nf.format(place.tracts)} tracts</span>
+      <span>{nf.format(place.acres)} acres</span>
+      {place.medianYear && <span>mostly c. {place.medianYear}</span>}
+    </p>
+  </div>
+</a>
+
+<style>
+  .place {
+    display: grid;
+    grid-template-rows: auto 1fr;
+    text-decoration: none;
+    background: var(--night-2);
+    color: #f3e8d4;
+    border-radius: 14px;
+    overflow: hidden;
+    border: 1px solid transparent;
+    transition: transform 0.35s var(--ease), border-color 0.3s, box-shadow 0.35s;
+  }
+  .place:hover {
+    transform: translateY(-4px);
+    border-color: rgba(255, 214, 140, 0.5);
+    box-shadow: 0 24px 50px -24px color-mix(in srgb, var(--night) 70%, transparent);
+    color: #f3e8d4;
+  }
+  .thumb {
+    aspect-ratio: 16 / 10;
+    display: grid;
+    place-items: center;
+    padding: 1.2rem;
+    background:
+      radial-gradient(90% 70% at 50% 110%, rgba(226, 160, 63, 0.16), transparent 70%),
+      var(--night);
+    border-bottom: 1px solid var(--rule-night);
+  }
+  .thumb svg {
+    width: 100%;
+    height: 100%;
+  }
+  .thumb path {
+    fill: var(--glow);
+    opacity: 0.9;
+    transition: opacity 0.3s;
+  }
+  .meta {
+    padding: 1.15rem 1.25rem 1.3rem;
+    display: grid;
+    gap: 0.5rem;
+    align-content: start;
+  }
+  h3 {
+    font-size: 1.5rem;
+  }
+  .blurb {
+    margin: 0;
+    font-size: 0.92rem;
+    line-height: 1.45;
+    color: rgba(243, 232, 212, 0.72);
+  }
+  .stats {
+    margin: 0.3rem 0 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.2rem 1rem;
+    font-size: 0.66rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--glow);
+  }
+</style>

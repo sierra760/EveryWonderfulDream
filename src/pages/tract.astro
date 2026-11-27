@@ -1,0 +1,696 @@
+---
+import Base from '../layouts/Base.astro';
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+---
+
+<Base title="Tract" overHero>
+  <article id="tract" data-base={base}>
+    <section class="t-hero on-night">
+      <div id="t-map" class="t-map map-fill" aria-label="Three-dimensional map of the tract"></div>
+      <div class="t-veil" aria-hidden="true"></div>
+      <div class="t-head wrap">
+        <p class="eyebrow" id="t-crumb">Small-tract record</p>
+        <h1 id="t-title" aria-live="polite">Loading tract…</h1>
+        <p class="t-sub" id="t-sub"></p>
+      </div>
+      <div class="t-tools">
+        <button type="button" class="chip" id="t-orbit" aria-pressed="false" hidden>Orbit</button>
+        <button type="button" class="chip" id="t-base" aria-pressed="false" hidden>Topo map</button>
+        <a class="chip" id="t-atlas" href={`${base}/atlas/`}>Find in atlas →</a>
+      </div>
+    </section>
+
+    <div id="t-missing" class="wrap-narrow t-missing" hidden>
+      <h2>Tract record unavailable</h2>
+      <p>
+        Check the serial number or search the atlas by name or location.
+      </p>
+      <p><a class="btn" href={`${base}/atlas/`}>Open the atlas <span class="arrow">→</span></a></p>
+    </div>
+
+    <div id="t-body" hidden>
+      <section class="t-facts">
+        <dl class="wrap facts" id="t-facts"></dl>
+      </section>
+
+      <section class="section wrap t-two">
+        <div>
+          <h2 class="t-h2">The patent</h2>
+          <div id="t-patent"></div>
+        </div>
+        <div>
+          <h2 class="t-h2">Survey location</h2>
+          <p class="t-note" id="t-legal"></p>
+          <div class="diagrams">
+            <figure>
+              <div id="t-section"></div>
+              <figcaption id="t-section-cap"></figcaption>
+            </figure>
+            <figure>
+              <div id="t-township"></div>
+              <figcaption id="t-township-cap"></figcaption>
+            </figure>
+          </div>
+        </div>
+      </section>
+
+      <section class="t-neighbors">
+        <div class="wrap">
+          <p class="eyebrow">Neighbors</p>
+          <h2 class="t-h2" id="t-nb-title">Also in this section</h2>
+          <ol class="nb-list" id="t-nb"></ol>
+        </div>
+      </section>
+
+      <section class="section wrap-narrow">
+        <h2 class="t-h2">Research this tract</h2>
+        <ul class="research" id="t-research"></ul>
+      </section>
+    </div>
+  </article>
+</Base>
+
+<style is:global>
+  .t-hero {
+    position: relative;
+    height: min(86svh, 54rem);
+    min-height: 30rem;
+    background: var(--night);
+    color: #f6ecd9;
+    overflow: hidden;
+  }
+  .t-map {
+    position: absolute;
+    inset: 0;
+  }
+  .t-veil {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background:
+      linear-gradient(to top, color-mix(in srgb, var(--night) 92%, transparent), color-mix(in srgb, var(--night) 50%, transparent) 26%, transparent 52%),
+      linear-gradient(to bottom, color-mix(in srgb, var(--night) 55%, transparent), transparent 22%);
+  }
+  .t-head {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: clamp(1.6rem, 4vw, 3rem);
+    pointer-events: none;
+  }
+  .t-head h1 {
+    font-size: clamp(2.3rem, 1.35rem + 5vw, 5.6rem);
+    line-height: 1.05;
+    margin-top: 0.9rem;
+    text-shadow: 0 2px 30px rgba(0, 0, 0, 0.5);
+  }
+  .t-sub {
+    margin: 0.9rem 0 0;
+    font-family: var(--font-mono);
+    font-size: clamp(0.74rem, 0.68rem + 0.3vw, 0.9rem);
+    letter-spacing: 0.08em;
+    color: rgba(255, 240, 215, 0.82);
+  }
+  .t-tools {
+    position: absolute;
+    top: calc(var(--header-h) + 0.6rem);
+    right: var(--gutter);
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+  .t-tools[hidden] {
+    display: none;
+  }
+  .chip {
+    font-family: var(--font-mono);
+    font-size: 0.66rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    text-decoration: none;
+    color: #f6ecd9;
+    background: color-mix(in srgb, var(--night) 60%, transparent);
+    border: 1px solid var(--rule-night);
+    border-radius: 999px;
+    padding: 0.55rem 0.95rem;
+    cursor: pointer;
+    backdrop-filter: blur(8px);
+    transition: background 0.2s, color 0.2s, border-color 0.2s;
+  }
+  .chip:hover,
+  .chip[aria-pressed='true'] {
+    background: var(--glow);
+    border-color: var(--glow);
+    color: var(--night);
+  }
+
+  .t-missing {
+    padding-block: 6rem;
+  }
+  .t-missing h2 {
+    font-size: clamp(2rem, 1.4rem + 3vw, 3.4rem);
+    margin: 1rem 0 1.4rem;
+  }
+
+  .t-facts {
+    border-bottom: 1px solid var(--rule);
+    background: var(--paper-2);
+  }
+  .facts {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+    margin: 0 auto;
+  }
+  .facts > div {
+    padding: 1.5rem 1.4rem 1.6rem 0;
+    border-right: 1px solid var(--rule);
+    margin-right: 1.4rem;
+  }
+  .facts > div:last-child {
+    border-right: 0;
+  }
+  .facts dt {
+    font-family: var(--font-mono);
+    font-size: 0.66rem;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    margin-bottom: 0.45rem;
+  }
+  .facts dd {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: 1.45rem;
+    line-height: 1.15;
+  }
+  .facts dd small {
+    display: block;
+    margin-top: 0.3rem;
+    font-family: var(--font-body);
+    font-size: 0.82rem;
+    color: var(--ink-3);
+    line-height: 1.35;
+  }
+
+  .t-two {
+    display: grid;
+    grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
+    gap: clamp(2.5rem, 6vw, 6rem);
+    align-items: start;
+  }
+  @media (max-width: 900px) {
+    .t-two {
+      grid-template-columns: 1fr;
+    }
+  }
+  .t-h2 {
+    font-size: clamp(1.9rem, 1.4rem + 2vw, 3rem);
+    margin: 0.9rem 0 1.6rem;
+  }
+  .t-note {
+    color: var(--ink-2);
+    max-width: 34rem;
+  }
+
+  /* the patent, as a document */
+  .patent {
+    position: relative;
+    background: #fbf6ea;
+    color: #2a2118;
+    padding: clamp(1.6rem, 4vw, 3rem) clamp(1.4rem, 4vw, 3.2rem) clamp(1.8rem, 4vw, 2.8rem);
+    border: 1px solid var(--paper-3);
+    box-shadow: 0 1px 0 #fff inset, 0 30px 60px -30px rgba(36, 27, 19, 0.35), 0 2px 6px rgba(36, 27, 19, 0.08);
+    font-family: var(--font-type);
+    font-size: 1.02rem;
+    line-height: 1.55;
+  }
+  .patent::after {
+    content: '';
+    position: absolute;
+    inset: 0.55rem;
+    border: 1px solid rgba(36, 27, 19, 0.14);
+    pointer-events: none;
+  }
+  .patent .p-top {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    font-size: 0.86rem;
+  }
+  .patent .p-usa {
+    font-family: var(--font-black);
+    font-weight: 400;
+    font-size: clamp(1.9rem, 1.3rem + 2.6vw, 3rem);
+    line-height: 1;
+    text-align: center;
+    letter-spacing: 0;
+    margin: 1.6rem 0 0.5rem;
+  }
+  .patent .p-greet {
+    text-align: center;
+    font-family: var(--font-body);
+    font-weight: 600;
+    font-size: 0.95rem;
+    margin-bottom: 1.6rem;
+  }
+  .patent dl {
+    margin: 0;
+    display: grid;
+    grid-template-columns: 7.2rem 1fr;
+    gap: 0.6rem 1rem;
+  }
+  .patent dt {
+    font-family: var(--font-mono);
+    font-size: 0.62rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: #8a7c69;
+    padding-top: 0.3em;
+  }
+  .patent dd {
+    margin: 0;
+  }
+  .patent .p-land {
+    font-weight: 700;
+  }
+  .patent .p-indexed {
+    display: block;
+    margin-top: 0.25rem;
+    font-size: 0.78rem;
+    letter-spacing: 0.02em;
+    color: #8a7c69;
+  }
+  .patent .p-foot {
+    margin: 1.6rem 0 0;
+    padding-top: 1rem;
+    border-top: 1px dashed rgba(36, 27, 19, 0.3);
+    font-family: var(--font-body);
+    font-size: 0.84rem;
+    color: #6b5f50;
+    line-height: 1.45;
+  }
+  .patent-img {
+    display: block;
+    width: 100%;
+    height: auto;
+    border: 1px solid var(--paper-3);
+    box-shadow: 0 30px 60px -30px rgba(36, 27, 19, 0.35);
+    margin-bottom: 1.4rem;
+    background: #fff;
+  }
+  .p-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.7rem;
+    margin-top: 1.5rem;
+  }
+
+  /* diagrams */
+  .diagrams {
+    display: grid;
+    grid-template-columns: 1.25fr 1fr;
+    gap: 1.6rem;
+    margin-top: 1.8rem;
+    align-items: start;
+  }
+  @media (max-width: 520px) {
+    .diagrams {
+      grid-template-columns: 1fr;
+    }
+  }
+  .diagrams figure {
+    margin: 0;
+  }
+  .diagrams svg {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+  .diagrams figcaption {
+    margin-top: 0.8rem;
+    font-size: 0.84rem;
+    line-height: 1.4;
+    color: var(--ink-3);
+  }
+  .dg-frame { fill: var(--paper-2); stroke: var(--ink); stroke-width: 1.2; }
+  .dg-quarter { stroke: var(--rule-strong); stroke-width: 0.6; stroke-dasharray: 3 3; }
+  .dg-tract { fill: #d8c7a3; stroke: var(--paper); stroke-width: 0.8; transition: fill 0.15s; cursor: pointer; }
+  .dg-tract:hover { fill: var(--amber); }
+  .dg-tract.me { fill: var(--ochre); stroke: var(--ink); stroke-width: 1; }
+  .dg-cell { fill: color-mix(in srgb, var(--ochre) var(--density, 0%), var(--paper-2)); stroke: var(--rule-strong); stroke-width: 0.6; }
+  .dg-cell.me { stroke: var(--ink); stroke-width: 2; }
+  .dg-num { font-family: var(--font-mono); font-size: 9px; fill: var(--ink); text-anchor: middle; dominant-baseline: central; pointer-events: none; }
+  .dg-compass { font-family: var(--font-mono); font-size: 9px; fill: var(--ink-3); text-anchor: middle; }
+
+  .t-neighbors {
+    background: var(--paper-2);
+    border-block: 1px solid var(--rule);
+    padding-block: clamp(3rem, 7vw, 5.5rem);
+  }
+  .nb-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(15.5rem, 1fr));
+    gap: 0 2rem;
+  }
+  .nb-list a {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 0.2rem 1rem;
+    padding: 0.7rem 0;
+    border-bottom: 1px solid var(--rule);
+    text-decoration: none;
+  }
+  .nb-list .nb-name {
+    font-family: var(--font-display);
+    font-size: 1.05rem;
+  }
+  .nb-list .nb-year,
+  .nb-list .nb-sub {
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    letter-spacing: 0.06em;
+    color: var(--ink-3);
+  }
+  .nb-list .nb-sub {
+    grid-column: 1 / -1;
+  }
+  .nb-list a:hover .nb-name {
+    color: var(--ochre);
+  }
+
+  .research {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: grid;
+    gap: 0;
+    border-top: 1px solid var(--rule);
+  }
+  .research li {
+    padding: 1.2rem 0;
+    border-bottom: 1px solid var(--rule);
+  }
+  .research strong {
+    display: block;
+    font-family: var(--font-display);
+    font-weight: 400;
+    font-size: 1.2rem;
+    margin-bottom: 0.25rem;
+  }
+  .research span {
+    color: var(--ink-2);
+    font-size: 0.96rem;
+  }
+</style>
+
+<script>
+  import { findTract, getSummary, tractBounds, tractFeature, BASE, type Tract, type Township } from '../lib/data';
+  import {
+    acresLabel, dms, feet, gloUrl, labelFromId, legalLong, patentNumberLabel,
+    subdivisionShort, tractTitle, yearLabel, fmt,
+  } from '../lib/format';
+  import { createMap, addTractLayers, addPlssLayers, setBasemap, orbit, maplibregl, SELECT } from '../lib/map';
+
+  const $ = (id: string) => document.getElementById(id)!;
+  const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]!));
+  const tractHref = (id: string) => `${BASE}/tract/?id=${encodeURIComponent(id)}`;
+
+  const id = new URLSearchParams(location.search).get('id') ?? '';
+
+  function missing() {
+    $('t-missing').hidden = false;
+    $('t-crumb').textContent = 'Not found';
+    $('t-title').textContent = id ? id : 'No tract chosen';
+    document.querySelector<HTMLElement>('.t-tools')!.hidden = true;
+  }
+
+  // ------------------------------------------------------------ diagrams
+
+  function projector(points: [number, number][], size: number, pad: number) {
+    const lat0 = points.reduce((s, p) => s + p[1], 0) / points.length;
+    const k = Math.cos((lat0 * Math.PI) / 180);
+    const xs = points.map((p) => p[0] * k);
+    const ys = points.map((p) => p[1]);
+    const minX = Math.min(...xs), maxX = Math.max(...xs), minY = Math.min(...ys), maxY = Math.max(...ys);
+    const scale = (size - 2 * pad) / Math.max(maxX - minX, maxY - minY);
+    const ox = pad + (size - 2 * pad - (maxX - minX) * scale) / 2;
+    const oy = pad + (size - 2 * pad - (maxY - minY) * scale) / 2;
+    return ([lon, lat]: number[]) => [ox + (lon * k - minX) * scale, oy + (maxY - lat) * scale] as [number, number];
+  }
+
+  const path = (rings: number[][][], proj: (p: number[]) => [number, number]) =>
+    rings.map((r) => 'M' + r.map((p) => proj(p).map((n) => n.toFixed(1)).join(',')).join('L') + 'Z').join('');
+
+  function sectionDiagram(t: Tract, twp: Township) {
+    const size = 340;
+    const frame = t.sec != null ? twp.sections[String(t.sec)] : undefined;
+    const mates = twp.tracts.filter((x) => x.sec === t.sec && !x.approx);
+    const pts: [number, number][] = frame ? frame : mates.flatMap((m) => m.g.flatMap((p) => p[0] as [number, number][]));
+    if (!pts.length) return '';
+    const proj = projector(pts, size, 22);
+    let svg = `<svg viewBox="0 0 ${size} ${size}" role="img" aria-label="Diagram of Section ${t.sec} showing this tract among its neighbors">`;
+    if (frame) {
+      svg += `<path class="dg-frame" d="${path([frame], proj)}"/>`;
+      const xs = frame.map((p) => proj(p)[0]), ys = frame.map((p) => proj(p)[1]);
+      const [x0, x1, y0, y1] = [Math.min(...xs), Math.max(...xs), Math.min(...ys), Math.max(...ys)];
+      svg += `<line class="dg-quarter" x1="${(x0 + x1) / 2}" y1="${y0}" x2="${(x0 + x1) / 2}" y2="${y1}"/>`;
+      svg += `<line class="dg-quarter" x1="${x0}" y1="${(y0 + y1) / 2}" x2="${x1}" y2="${(y0 + y1) / 2}"/>`;
+    }
+    for (const m of mates) {
+      if (m.id === t.id) continue;
+      svg += `<a href="${tractHref(m.id)}"><path class="dg-tract" d="${m.g.map((p) => path(p, proj)).join('')}"><title>${esc(tractTitle(m))} · ${esc(m.sub ?? '')}</title></path></a>`;
+    }
+    if (!t.approx) svg += `<path class="dg-tract me" d="${t.g.map((p) => path(p, proj)).join('')}"><title>This tract</title></path>`;
+    svg += `<text class="dg-compass" x="${size / 2}" y="12">N</text>`;
+    return svg + '</svg>';
+  }
+
+  // Sections of a township are numbered boustrophedon, starting in the north-east corner.
+  function sectionAt(row: number, col: number) {
+    return row % 2 === 0 ? row * 6 + (6 - col) : row * 6 + col + 1;
+  }
+
+  function townshipDiagram(t: Tract, twp: Township) {
+    const cell = 40, pad = 16, size = cell * 6 + pad * 2;
+    const counts = new Map<number, number>();
+    for (const x of twp.tracts) if (x.sec != null) counts.set(x.sec, (counts.get(x.sec) ?? 0) + 1);
+    const max = Math.max(1, ...counts.values());
+    let svg = `<svg viewBox="0 0 ${size} ${size}" role="img" aria-label="Diagram of the township’s 36 sections, shaded by number of small tracts">`;
+    let mine = '';
+    for (let r = 0; r < 6; r++) {
+      for (let c = 0; c < 6; c++) {
+        const s = sectionAt(r, c);
+        const n = counts.get(s) ?? 0;
+        const x = pad + c * cell, y = pad + r * cell;
+        const density = n ? `style="--density:${(14 + 46 * Math.sqrt(n / max)).toFixed(1)}%"` : '';
+        const rect = `<rect class="dg-cell${s === t.sec ? ' me' : ''}" x="${x}" y="${y}" width="${cell}" height="${cell}" ${density}><title>Section ${s}: ${n} tract${n === 1 ? '' : 's'}</title></rect>`;
+        const num = `<text class="dg-num" x="${x + cell / 2}" y="${y + cell / 2}">${s}</text>`;
+        if (s === t.sec) mine = rect + num;
+        else svg += rect + num;
+      }
+    }
+    svg += mine + `<text class="dg-compass" x="${size / 2}" y="11">N</text>`;
+    return svg + '</svg>';
+  }
+
+  // ------------------------------------------------------------ render
+
+  function fact(label: string, value: string, note = '') {
+    return `<div><dt>${label}</dt><dd>${value}${note ? `<small>${note}</small>` : ''}</dd></div>`;
+  }
+
+  async function render(t: Tract, twp: Township) {
+    const summary = await getSummary();
+    const place = summary.places.find((p) => p.id === t.place);
+    const title = tractTitle(t);
+    const l = t.lld[0];
+    document.title = `${title} · ${t.twpLabel ?? ''} Sec. ${t.sec ?? ''} · Every Wonderful Dream`;
+
+    $('t-crumb').innerHTML = [place?.name ?? 'San Bernardino County', t.twpLabel, t.sec != null ? `Section ${t.sec}` : null]
+      .filter(Boolean).map((s) => esc(String(s))).join(' &nbsp;·&nbsp; ');
+    $('t-title').textContent = title;
+    $('t-sub').textContent = [
+      t.name ? `${t.office} ${t.doc}` : null,
+      t.sub,
+      t.acres != null ? acresLabel(t) : null,
+      `Patented ${yearLabel(t)}`,
+    ].filter(Boolean).join('  ·  ');
+    ($('t-atlas') as HTMLAnchorElement).href = `${BASE}/atlas/?tract=${encodeURIComponent(t.id)}`;
+
+    // facts
+    const acresNote = t.approx
+      ? 'BLM’s mapping locates this tract only to its section.'
+      : t.derived
+        ? 'By legal description. The outline shown was worked out by this atlas; BLM maps this case only to its section.'
+      : t.nominal && t.mapped && Math.abs(t.nominal - t.mapped) / t.nominal > 0.2
+        ? `By description. As mapped by BLM: ${t.mapped} acres.`
+        : t.nominal ? 'By legal description' : 'Measured from BLM’s mapped outline';
+    $('t-facts').innerHTML = [
+      fact('Patented', yearLabel(t), t.dateSource === 'patent' ? 'Signature date on the patent' : t.date ? 'Date in BLM’s patent index' : t.year ? 'Estimated from the patent number' : ''),
+      fact('Size', acresLabel(t), acresNote),
+      fact('Patent no.', patentNumberLabel(t.pat)),
+      fact('Serial', `${t.office} ${t.doc}`, `BLM case ${esc(t.serial)}`),
+      fact('Elevation', t.elev != null ? feet(t.elev) : '—', t.elev != null ? `${fmt(t.elev)} m above sea level` : ''),
+      fact('Position', `<span class="mono" style="font-size:.95rem">${t.c[1].toFixed(5)}, ${t.c[0].toFixed(5)}</span>`, dms(t.c[1], t.c[0])),
+    ].join('');
+
+    // patent
+    const issued = t.date
+      ? yearLabel(t)
+      : t.year ? `about ${t.year} <span style="font-family:var(--font-body);color:#8a7c69">(estimated from the patent number)</span>` : 'date not recorded here';
+    const lands = t.lld.map((x) => esc(legalLong(x))).join('; ');
+    $('t-patent').innerHTML = `
+      ${t.image ? `<img class="patent-img" src="${BASE}/${esc(t.image)}" alt="Scan of patent ${esc(t.pat ?? '')}" loading="lazy" />` : ''}
+      <div class="patent">
+        <div class="p-top"><span>${esc(t.office)} ${esc(t.doc)}</span><span>Patent No. ${esc(patentNumberLabel(t.pat))}</span></div>
+        <p class="p-usa">The United States of America,</p>
+        <p class="p-greet">To all to whom these presents shall come, Greeting:</p>
+        <dl>
+          <dt>Granted to</dt>
+          <dd>${t.name ? `<strong>${esc(t.name.join(' and '))}</strong>` : 'the patentee named on the original document'}${t.indexed?.length ? `<span class="p-indexed">Indexed by BLM as ${esc(t.indexed.join('; '))}</span>` : ''}</dd>
+          <dt>The land</dt>
+          <dd class="p-land">${lands || 'Described on the original document'}, California${t.acres != null ? `, containing ${esc(acresLabel(t))}` : ''}.</dd>
+          <dt>Under</dt>
+          <dd>the Act of Congress approved June 1, 1938 (52 Stat. 609), “to provide for the purchase of public lands for home and other sites”: the Small Tract Act.</dd>
+          <dt>Issued</dt>
+          <dd>${issued}</dd>
+        </dl>
+        <p class="p-foot">An abstract compiled from Bureau of Land Management records, not the document itself. ${t.image ? '' : 'The scanned original, with the signatures and any reservations written into it, is held by BLM.'}</p>
+      </div>
+      <div class="p-actions">
+        <a class="btn" href="${gloUrl(t)}" target="_blank" rel="noopener">See the original at GLO Records <span class="arrow">↗</span></a>
+      </div>`;
+
+    // survey
+    $('t-legal').innerHTML = t.lld.length
+      ? `${t.lld.map((x) => esc(legalLong(x))).join('; ')}.`
+      : 'BLM’s record for this case carries no legal description.';
+    $('t-section').innerHTML = sectionDiagram(t, twp);
+    const mates = twp.tracts.filter((x) => x.sec === t.sec);
+    $('t-section-cap').textContent = t.approx
+      ? `Section ${t.sec}. This tract lies somewhere inside it; ${mates.length - 1} other small tracts are drawn.`
+      : `Section ${t.sec}, one square mile. This tract is shaded ochre. ${mates.length - 1} other small tract${mates.length === 2 ? '' : 's'} patented in the same section.`;
+    $('t-township').innerHTML = townshipDiagram(t, twp);
+    $('t-township-cap').textContent = `${twp.label}: thirty-six sections, six miles on a side, shaded by the ${fmt(twp.tracts.length)} small tracts patented here.`;
+
+    // neighbors
+    const others = mates.filter((x) => x.id !== t.id)
+      .sort((a, b) => (a.year ?? 9999) - (b.year ?? 9999) || a.id.localeCompare(b.id));
+    $('t-nb-title').textContent = others.length
+      ? `${others.length} other tract${others.length === 1 ? '' : 's'} in Section ${t.sec}`
+      : `The only small tract in Section ${t.sec}`;
+    $('t-nb').innerHTML = others.map((x) => `
+      <li><a href="${tractHref(x.id)}">
+        <span class="nb-name">${esc(tractTitle(x))}</span>
+        <span class="nb-year">${esc(yearLabel(x))}</span>
+        <span class="nb-sub">${esc(x.sub ?? '')}${x.acres != null ? ` · ${esc(acresLabel(x))}` : ''}</span>
+      </a></li>`).join('');
+
+    // research
+    const [lat, lon] = [t.c[1].toFixed(5), t.c[0].toFixed(5)];
+    $('t-research').innerHTML = `
+      <li><strong><a href="${gloUrl(t)}" target="_blank" rel="noopener">The patent at BLM GLO Records ↗</a></strong>
+        <span>The scanned patent itself, with its signatures and reservations. Search for accession ${esc(t.pat && /^\d{7}$/.test(t.pat) ? `SER-${t.pat}` : t.pat ?? t.doc)}.</span></li>
+      <li><strong><a href="https://www.archives.gov/research/land/accessing-land-entry-files" target="_blank" rel="noopener">The case file at the National Archives ↗</a></strong>
+        <span>The application, lease papers and correspondence. Files for patented tracts went to Washington and are requested by serial patent number${t.pat ? ` (No. ${esc(patentNumberLabel(t.pat))})` : ''}; cite <em>${esc(t.office)} ${esc(t.doc)}</em> as well. Leases that were never patented are at the National Archives at Riverside.</span></li>
+      <li><strong><a href="https://www.openstreetmap.org/?mlat=${lat}&mlon=${lon}#map=16/${lat}/${lon}" target="_blank" rel="noopener">The place on OpenStreetMap ↗</a></strong>
+        <span>Current roads and landmarks near ${lat}, ${lon}.</span></li>
+      <li><strong><a href="${BASE}/history/">History of the Small Tract Act</a></strong>
+        <span>How applicants leased, improved, and purchased public land under the act.</span></li>`;
+
+    $('t-body').hidden = false;
+    drawMap(t, twp);
+  }
+
+  // ------------------------------------------------------------ map
+
+  function drawMap(t: Tract, twp: Township) {
+    const b = t.approx && t.sec != null && twp.sections[String(t.sec)]
+      ? tractBounds({ g: [[twp.sections[String(t.sec)]]] })
+      : tractBounds(t);
+    const center: [number, number] = [(b[0] + b[2]) / 2, (b[1] + b[3]) / 2];
+    const map = createMap({ container: $('t-map'), mood: 'day', center, zoom: 14.5, pitch: 66, bearing: -24, exaggeration: 1.5 });
+    if (!map) return;
+    map.scrollZoom.disable();
+    map.addControl(new maplibregl.NavigationControl({ visualizePitch: true }), 'bottom-right');
+
+    map.on('load', () => {
+      const neighbors = twp.tracts.filter((x) => !x.approx && x.id !== t.id).map((x) => tractFeature(x));
+      addPlssLayers(map, {
+        type: 'FeatureCollection',
+        features: Object.entries(twp.sections).map(([s, ring]) => ({
+          type: 'Feature' as const, properties: { s: Number(s), t: twp.label }, geometry: { type: 'Polygon' as const, coordinates: [ring] },
+        })),
+      });
+      map.addSource('neighbors', { type: 'geojson', data: { type: 'FeatureCollection', features: neighbors }, promoteId: 'id' });
+      addTractLayers(map, 'neighbors', 'nb', { minzoom: 9 });
+
+      if (!t.approx) {
+        map.addSource('me', { type: 'geojson', data: tractFeature(t) });
+        map.addLayer({ id: 'me-fill', type: 'fill', source: 'me', paint: { 'fill-color': SELECT, 'fill-opacity': 0.2 } });
+        map.addLayer({ id: 'me-glow', type: 'line', source: 'me', paint: { 'line-color': SELECT, 'line-width': 14, 'line-blur': 12, 'line-opacity': 0.55 } });
+        map.addLayer({ id: 'me-line', type: 'line', source: 'me', layout: { 'line-join': 'round' }, paint: { 'line-color': '#eaffff', 'line-width': 2.6 } });
+      }
+
+      map.fitBounds([[b[0], b[1]], [b[2], b[3]]], {
+        padding: { top: 120, bottom: 200, left: 60, right: 60 },
+        pitch: 66, bearing: -24, maxZoom: 15.5, duration: 0,
+      });
+
+      // neighbors are links
+      let hovered: string | null = null;
+      map.on('mousemove', 'nb-fill', (e) => {
+        const f = e.features?.[0];
+        if (!f) return;
+        map.getCanvas().style.cursor = 'pointer';
+        if (hovered && hovered !== f.id) map.setFeatureState({ source: 'neighbors', id: hovered }, { hover: false });
+        hovered = String(f.id);
+        map.setFeatureState({ source: 'neighbors', id: hovered }, { hover: true });
+        map.getCanvas().title = labelFromId(hovered);
+      });
+      map.on('mouseleave', 'nb-fill', () => {
+        map.getCanvas().style.cursor = '';
+        map.getCanvas().title = '';
+        if (hovered) map.setFeatureState({ source: 'neighbors', id: hovered }, { hover: false });
+        hovered = null;
+      });
+      map.on('click', 'nb-fill', (e) => {
+        const f = e.features?.[0];
+        if (f) location.href = tractHref(String(f.id));
+      });
+
+      const spin = orbit(map, 1.8);
+      const orbitBtn = $('t-orbit');
+      orbitBtn.hidden = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      orbitBtn.setAttribute('aria-pressed', String(spin.running));
+      for (const ev of ['mousedown', 'touchstart', 'wheel', 'keydown'] as const) {
+        map.getCanvas().addEventListener(ev, () => orbitBtn.setAttribute('aria-pressed', 'false'), { passive: true });
+      }
+      orbitBtn.addEventListener('click', () => {
+        if (spin.running) spin.stop(); else spin.start();
+        orbitBtn.setAttribute('aria-pressed', String(spin.running));
+      });
+      const baseBtn = $('t-base');
+      baseBtn.hidden = false;
+      baseBtn.addEventListener('click', () => {
+        const topo = baseBtn.getAttribute('aria-pressed') !== 'true';
+        baseBtn.setAttribute('aria-pressed', String(topo));
+        setBasemap(map, topo ? 'topo' : 'imagery');
+      });
+      // let people zoom once they have clicked into the map
+      map.getCanvas().addEventListener('click', () => map.scrollZoom.enable(), { once: true });
+    });
+  }
+
+  if (!id) missing();
+  else {
+    findTract(id).then((hit) => (hit ? render(hit.tract, hit.township) : missing())).catch((err) => {
+      console.error(err);
+      missing();
+    });
+  }
+</script>

@@ -1,0 +1,417 @@
+---
+import Base from '../layouts/Base.astro';
+import YearChart from '../components/YearChart.astro';
+import { loadSummary } from '../lib/summary';
+
+const summary = loadSummary() as any;
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+const nf = new Intl.NumberFormat('en-US');
+const years: Record<string, number> = summary.years;
+const peak = Object.entries(years).sort((a, b) => b[1] - a[1])[0];
+const caShare = Math.round((summary.tracts / 27880) * 100);
+
+// Sources, numbered in order of first use.
+const sources = [
+  { id: 'act', label: 'Act of June 1, 1938, ch. 317, 52 Stat. 609', url: 'https://www.govinfo.gov/link/statute/52/609' },
+  { id: 'nps-luckie', label: 'National Park Service, “Dr. Luckie Study Center”', url: 'https://www.nps.gov/jotr/learn/nature/dr-luckie-study-center.htm' },
+  { id: 'v29', label: 'Visit 29 Palms, “Historic 29” and “Homesteading” (drawing on Ed Ainsworth, Five Acres of Heaven, 1955, and Pat Rimmington)', url: 'https://visit29.org/historic-29/homesteading/' },
+  { id: 'nps-home', label: 'National Park Service, “Homesteaders”', url: 'https://www.nps.gov/articles/homesteaders.htm' },
+  { id: 'dm4011', label: 'Desert Magazine, November 1940', url: 'https://archive.org/details/Desert-Magazine-1940-11' },
+  { id: 'dm3807', label: 'Desert Magazine, July 1938', url: 'https://archive.org/details/Desert-Magazine-1938-07' },
+  { id: 'dm4010', label: 'Desert Magazine, October 1940', url: 'https://archive.org/details/Desert-Magazine-1940-10' },
+  { id: 'dm4008', label: 'Circular No. 1470 (43 CFR Part 257), June 10, 1940, printed in Desert Magazine, August 1940', url: 'https://archive.org/details/Desert-Magazine-1940-08' },
+  { id: 'dm4102', label: 'Desert Magazine, February 1941', url: 'https://archive.org/details/Desert-Magazine-1941-02' },
+  { id: 'dm4512', label: 'Melissa Branson Stedman, “Jackrabbit Homesteader,” Desert Magazine, December 1945', url: 'https://archive.org/details/Desert-Magazine-1945-12' },
+  { id: 'dm4109', label: 'Desert Magazine, September 1941', url: 'https://archive.org/details/Desert-Magazine-1941-09' },
+  { id: 'dx', label: 'Kim Stringfellow, “Jackrabbit Homestead at Desert X 2021”', url: 'https://jackrabbithomestead.com/jackrabbit-homestead-desert-x-2021/' },
+  { id: 'primer', label: 'Kim Stringfellow, “Jackrabbit Homestead: a primer”', url: 'https://jackrabbithomestead.com/primer/' },
+  { id: 'dm5709', label: 'Desert Magazine, September 1957', url: 'https://archive.org/details/Desert-Magazine-1957-09' },
+  { id: 'dm4710', label: 'Desert Magazine, October 1947', url: 'https://archive.org/details/Desert-Magazine-1947-10' },
+  { id: 'dm5012', label: 'Desert Magazine, December 1950', url: 'https://archive.org/details/Desert-Magazine-1950-12' },
+  { id: 'dm5406', label: 'Desert Magazine, June 1954', url: 'https://archive.org/details/Desert-Magazine-1954-06' },
+  { id: 'act54', label: 'Act of June 8, 1954, ch. 270, 68 Stat. 239', url: 'https://www.govinfo.gov/link/statute/68/239' },
+  { id: 'dm5801', label: 'Desert Magazine, January 1958', url: 'https://archive.org/details/Desert-Magazine-1958-01' },
+  { id: 'bellesi', label: 'Lou Bellesi, “BLM and the Small Tract Act in the Southern California Desert: A Brief History,” Public Lands Foundation', url: 'https://publicland.org/plf-archives/35_archives/documents/doc_1306_bellesi.html' },
+  { id: 'ghost', label: 'Kim Stringfellow, “Jackrabbits, Ghost Grids and LandBanking+,” Artbound, 2020, citing BLM’s Guide Book for Managing Existing Small Tract Areas (April 1980)', url: 'https://www.pbssocal.org/shows/artbound/jackrabbits-ghost-grids-and-landbanking' },
+  { id: 'eo', label: 'Executive Order 9701, March 4, 1946', url: 'https://www.presidency.ucsb.edu/documents/executive-order-9701-providing-for-the-reservation-rights-fissionable-materials-lands' },
+  { id: 'flpma', label: '43 U.S.C. 682a (repealed), source credits and repeal note', url: 'https://www.law.cornell.edu/uscode/text/43/682a' },
+  { id: 'ap', label: 'Tom Verdin, Associated Press, “Homesteader Legacy Leaves Desert Littered With Abandoned Shacks,” Los Angeles Times, November 5, 2000', url: 'https://www.latimes.com/archives/la-xpm-2000-nov-05-me-47325-story.html' },
+  { id: 'hdts', label: 'High Desert Test Sites, “History”', url: 'https://www.hdts.site/history' },
+  { id: 'carraher', label: 'Chris Carraher, “Home: Finding Our Place,” 2009', url: 'https://jackrabbithomestead.com/home-finding-our-place/' },
+  { id: 'ib', label: 'San Bernardino County Building and Safety, Information Bulletin IB-0004, “Homestead/Recreational Cabins”', url: 'https://lus.sbcounty.gov/wp-content/uploads/sites/48/IB-0004-2025-Homestead-Rec-Cabins-Rev-11.19.25.pdf' },
+  { id: 'smith', label: 'Richard Grant, “A New Breed of Homesteader…,” Smithsonian, December 2026', url: 'https://www.smithsonianmag.com/history/new-breed-homsteader-turning-abandoned-shacks-previous-era-conmunity-desolation-california-180989840/' },
+];
+const n = (id: string) => sources.findIndex((s) => s.id === id) + 1;
+
+const timeline = [
+  ['1920s', 'Veterans of the First World War, many sent by Dr. James B. Luckie, take up 160-acre homesteads around Twentynine Palms for their health.'],
+  ['1938', 'June 1: the Act “to provide for the purchase of public lands for home and other sites” is approved.'],
+  ['1940', 'June: the first regulations. August 9: the Los Angeles land office begins taking applications.'],
+  ['1941', 'January: the first lands are classified, near Twentynine Palms and in Morongo Valley.'],
+  ['1946', 'The General Land Office and the Grazing Service become the Bureau of Land Management.'],
+  ['1947', 'New rules: lessees who have built may buy at appraised value plus the cost of survey.'],
+  ['1950', 'More than 12,000 five-acre leases issued at Los Angeles; a dozen or so deeds a month.'],
+  ['1954', 'June 8: Congress rewrites the Act. Up to 75 applicants a day at the Los Angeles office.'],
+  ['1957', 'Auctions of forfeited tracts, a protest from Yucca Valley, congressional hearings in San Bernardino and Los Angeles.'],
+  ['1959', 'The building requirement is dropped; thousands of classified tracts go to auction.'],
+  ['1960', `The peak. ${nf.format(Number(peak[1]))} patents in San Bernardino County by this atlas’s count; 9,908 nationwide.`],
+  ['1976', 'October 21: the Federal Land Policy and Management Act repeals the Small Tract Act.'],
+  ['1999–2000', 'Volunteers and the county, with a federal grant, begin clearing derelict cabins.'],
+  ['2000s', 'Artists buy and rebuild cabins around Joshua Tree and Wonder Valley.'],
+];
+---
+
+<Base title="History" description="How the Small Tract Act of 1938 turned the Mojave into five-acre jackrabbit homesteads: the veterans, the land office, the rush of the 1950s and what came after.">
+  <header class="page-hero wrap">
+    <p class="eyebrow">History</p>
+    <h1>Five acres, a cabin <em>and a deed</em></h1>
+    <p class="lede">
+      The Small Tract Act was in force from 1938 to 1976. San Bernardino County accounted for roughly
+      three quarters of the California patents issued under the program. The records show how a program
+      associated with veterans settling near Twentynine Palms expanded into large-scale land sales.
+    </p>
+  </header>
+
+  <div class="wrap story">
+    <nav class="chapters" aria-label="History chapters">
+      <p class="label">Chapters</p>
+      <ol>
+        <li><a href="#before">Before the Act</a></li>
+        <li><a href="#act">The Act</a></li>
+        <li><a href="#worked">How it worked</a></li>
+        <li><a href="#rush">The rush</a></li>
+        <li><a href="#kept">What the patent kept back</a></li>
+        <li><a href="#after">After</a></li>
+        <li><a href="#numbers">The numbers</a></li>
+        <li><a href="#timeline-h">Timeline</a></li>
+        <li><a href="#sources">Sources</a></li>
+      </ol>
+    </nav>
+
+    <article class="prose">
+      <h2 id="before">Before the Act</h2>
+      <p class="dropcap">
+        The story usually starts with a doctor. James B. Luckie treated First World War veterans in the
+        Los Angeles area with lung damage from gas exposure or tuberculosis. He recommended the desert.
+        In the 1920s, some of his patients settled around the oasis at Twentynine Palms, where the air was dry
+        and the elevation moderate.<sup><a href="#s-nps-luckie">{n('nps-luckie')}</a></sup><sup><a href="#s-v29">{n('v29')}</a></sup>
+      </p>
+      <p>
+        They took up land the only way the law then offered: as 160-acre homesteads, meant for farming.<sup><a href="#s-nps-home">{n('nps-home')}</a></sup>
+        Few farmed. According to a local account from 1955, Paul B. Witmer, who ran the federal land office
+        in Los Angeles, drove out to ask why veterans living on pensions were applying for farmland. He
+        came back convinced they needed a place to live.<sup><a href="#s-v29">{n('v29')}</a></sup>
+        Desert Magazine was already calling Witmer one of the original sponsors of the law in 1940.<sup><a href="#s-dm4011">{n('dm4011')}</a></sup>
+        The bill itself was carried by Congressman Ed Izac of San Diego.<sup><a href="#s-dm3807">{n('dm3807')}</a></sup>
+        By the same 1955 account it took three tries.
+      </p>
+
+      <h2 id="act">The Act</h2>
+      <p>
+        What passed on June 1, 1938 was one paragraph long. It let the Secretary of the Interior sell or lease “a
+        tract of not exceeding five acres” of public land that he might classify “as chiefly valuable as a home,
+        cabin, camp, health, convalescent, recreational, or business site.” Any citizen, or anyone who had declared
+        the intention to become one, could apply if twenty-one or the head of a family. One tract each. The government kept the oil, the gas and the other minerals.<sup><a href="#s-act">{n('act')}</a></sup>
+      </p>
+      <p>
+        It had no short name. The press called it the Five-Acre Tract law, or the Izac law. The month it was signed,
+        Desert Magazine’s editor Randall Henderson wrote that it might turn out a great benefit to the West or a
+        headache.<sup><a href="#s-dm3807">{n('dm3807')}</a></sup> By October 1940, two months after filing opened,
+        the same magazine was calling the tracts “jackrabbit homesteads,” and that one stuck.<sup><a href="#s-dm4010">{n('dm4010')}</a></sup>
+      </p>
+      <p>
+        The law was not written for veterans, though veterans were the reason for it, and it was not a homestead
+        law in the old sense. Nobody had to live on a small tract. The first regulations said outright that the
+        land was “not intended to be devoted to producing a living.”<sup><a href="#s-dm4008">{n('dm4008')}</a></sup>
+      </p>
+
+      <h2 id="worked">How it worked</h2>
+      <p>
+        Five acres, for five years, at five dollars a year: that was the early bargain as one Morongo Valley
+        homesteader summed it up in 1945.<sup><a href="#s-dm4512">{n('dm4512')}</a></sup> The procedure changed
+        several times in thirty-eight years. In outline it ran like this.
+      </p>
+      <ol class="steps">
+        <li>
+          <strong>Classify.</strong> Nothing could be leased or sold until the government had classified it as
+          small-tract land. The first classifications, announced in January 1941, covered about 960 acres near
+          Twentynine Palms and 360 in Morongo Valley.<sup><a href="#s-dm4102">{n('dm4102')}</a></sup> The pale blue
+          areas on <a href={`${base}/atlas/`}>the atlas</a> are classifications.
+        </li>
+        <li>
+          <strong>File.</strong> An application and a five-dollar fee at the land office, with the tract described
+          by legal subdivision. The regulations fixed the shape: five chains by ten, or 330 feet by 660.<sup><a href="#s-dm4008">{n('dm4008')}</a></sup>
+        </li>
+        <li>
+          <strong>Lease.</strong> Five dollars a year for the first Southern California tracts.<sup><a href="#s-dm4102">{n('dm4102')}</a></sup>
+          The term was five years to begin with and three by 1954.<sup><a href="#s-dm5406">{n('dm5406')}</a></sup>
+        </li>
+        <li>
+          <strong>Build.</strong> To buy, a lessee had to improve the land: $300 worth, by the rule announced in
+          1941.<sup><a href="#s-dm4109">{n('dm4109')}</a></sup> Accounts of the minimum cabin vary with the decade,
+          from about 120 square feet early on to 400 by the middle 1950s.<sup><a href="#s-dx">{n('dx')}</a></sup><sup><a href="#s-dm5709">{n('dm5709')}</a></sup>
+          Local firms sold prefabricated cabins to meet it.<sup><a href="#s-primer">{n('primer')}</a></sup>
+        </li>
+        <li>
+          <strong>Buy.</strong> From 1947, a lessee who had built could purchase at the appraised value plus the
+          cost of survey.<sup><a href="#s-dm4710">{n('dm4710')}</a></sup> In 1950 a five-acre site cost $75 to $150
+          all told; in 1954 the appraisals averaged about $20 an acre.<sup><a href="#s-dm5012">{n('dm5012')}</a></sup><sup><a href="#s-dm5406">{n('dm5406')}</a></sup>
+        </li>
+        <li>
+          <strong>Patent.</strong> A single page in the name of the United States, numbered in the national series.
+          <a href={`${base}/#the-paper`}>Read Ruth Sem’s 1952 patent.</a>
+        </li>
+      </ol>
+      <p>
+        The 1940 regulations also promised what would not be allowed: scattered settlement that would burden
+        local government with roads and schools, and anything that might create “eyesores” along the highways.<sup><a href="#s-dm4008">{n('dm4008')}</a></sup>
+      </p>
+
+      <h2 id="rush">The rush</h2>
+      <p>
+        The Los Angeles office began taking applications on August 9, 1940 and had 225 within two weeks, three
+        quarters of them for the country around Twentynine Palms.<sup><a href="#s-dm4010">{n('dm4010')}</a></sup>
+        Then the war stopped the building. Tires, gasoline and lumber were rationed, and most lessees left their
+        five-dollar ranchos alone.<sup><a href="#s-dm4512">{n('dm4512')}</a></sup>
+      </p>
+      <p>
+        Afterwards it went quickly. By the end of 1950 the office had issued more than 12,000 leases and was
+        seeing 200 new applicants a month.<sup><a href="#s-dm5012">{n('dm5012')}</a></sup> By 1954 it was
+        processing as many as 75 in a day.<sup><a href="#s-dm5406">{n('dm5406')}</a></sup> Congress rewrote the Act
+        that June, opening it to corporations, associations and local governments.<sup><a href="#s-act54">{n('act54')}</a></sup>
+      </p>
+      <div class="in-chart">
+        <YearChart years={years}>
+          Annual patent counts for the small tracts BLM mapped in San Bernardino County. Dates come from the
+          patent index where available.
+          <a href={`${base}/about/#sources`}>Sources.</a>
+        </YearChart>
+      </div>
+      <p>
+        In the spring of 1957 the Bureau of Land Management began auctioning tracts whose leases had lapsed,
+        with title passing at once and no cabin required. Lessees who had built by the rules objected, led by a
+        group from Yucca Valley. The auctions stopped, San Bernardino County was closed for a time to new
+        applications, and a House subcommittee held hearings in San Bernardino and Los Angeles that October.<sup><a href="#s-dm5709">{n('dm5709')}</a></sup>
+        The policy that came out of it let an applicant choose: lease and build, or buy outright at the appraised
+        price.<sup><a href="#s-dm5801">{n('dm5801')}</a></sup> From 1959, according to a BLM veteran of those years,
+        the building requirement was dropped altogether and some 4,000 classified tracts were offered at auction.<sup><a href="#s-bellesi">{n('bellesi')}</a></sup>
+      </p>
+      <p>
+        Nationally the peak came in 1960, with 9,908 patents.<sup><a href="#s-ghost">{n('ghost')}</a></sup> The
+        county’s patent count also peaked in 1960, then fell sharply.
+      </p>
+
+      <h2 id="kept">What the patent kept back</h2>
+      <p>
+        A small-tract patent gave less than it seemed to. The Act reserved the oil, gas and other minerals to the
+        United States, and from 1946 an executive order required federal land disposals to reserve fissionable
+        materials as well.<sup><a href="#s-act">{n('act')}</a></sup><sup><a href="#s-eo">{n('eo')}</a></sup>
+        Then there was the road. The index entry for Ruth Sem’s 1952 patent in Wonder Valley records both: oil,
+        gas, uranium, thorium and other minerals reserved, and the land subject to an easement for roadways
+        “not exceeding 33 feet in width” along its boundaries.
+      </p>
+      <p>
+        That strip is why the desert looks the way it does. Reserve thirty-three feet along the edges of every
+        rectangle and you have, on paper, a public road down every line of the grid. Where people graded them,
+        the lines became the washboard roads that still run to the horizon in Wonder Valley and Landers. Where
+        they did not, the grid is only in the records. A retired BLM man who wrote a short history of the program adds that in some
+        classifications the rights-of-way were never reserved at all.<sup><a href="#s-bellesi">{n('bellesi')}</a></sup>
+      </p>
+      <p>
+        Look at the atlas around Landers and Joshua Tree and you will also see the tracts fall in a checkerboard,
+        a square mile on and a square mile off. That pattern is older than the Act. Where alternate sections had
+        already left the public domain, most often as nineteenth-century railroad grants, only the squares in
+        between were the government’s to sell.
+      </p>
+
+      <h2 id="after">After</h2>
+      <p>
+        Congress repealed the Small Tract Act on October 21, 1976, in the same law that ended homesteading
+        generally. Existing leases and patents stood.<sup><a href="#s-flpma">{n('flpma')}</a></sup> By then the
+        rush was fifteen years past, and a good many of the cabins were empty. There had never been water on
+        most tracts, and the people who built in the fifties grew old or lost interest; their heirs often wanted
+        neither the cabin nor the tax bill.
+      </p>
+      <p>
+        By 2000 the Associated Press counted roughly 2,000 derelict small-tract structures across the county’s
+        high desert. A removal campaign, led by a resident of Flamingo Heights and helped by a $500,000 federal
+        housing grant, had listed 145 shacks; the owners of 113 agreed to pull down their own.<sup><a href="#s-ap">{n('ap')}</a></sup>
+        Locally the effort is remembered as Shack Attack.
+      </p>
+      <p>
+        About the same time, some of the cabins found new owners. The artist Andrea Zittel set up A-Z West on five acres
+        near Joshua Tree in 2000, and High Desert Test Sites followed in 2002.<sup><a href="#s-hdts">{n('hdts')}</a></sup>
+        In Wonder Valley, artists who had moved into old homesteads held the first Homestead Cabin Festival in
+        2008, partly in answer to the demolitions.<sup><a href="#s-carraher">{n('carraher')}</a></sup> Since then
+        have come short-term rentals, rising prices and a county rulebook that classes a surviving shack as a
+        “rec cabin.”<sup><a href="#s-ib">{n('ib')}</a></sup> Residents continue to debate how the cabins
+        should be used.<sup><a href="#s-smith">{n('smith')}</a></sup>
+      </p>
+
+      <h2 id="numbers">The numbers</h2>
+      <p>
+        The figures usually quoted come from a guidebook BLM compiled in 1980, as cited by Kim Stringfellow:
+        between 1938 and 1977 the government received 141,536 small-tract lease applications nationwide and
+        issued 59,481 patents for 232,473 acres. California accounted for 27,880 of those patents and 124,487
+        acres.<sup><a href="#s-ghost">{n('ghost')}</a></sup>
+      </p>
+      <p>
+        This atlas arrives at its own count from BLM’s present-day land records:
+        <strong>{nf.format(summary.tracts)} patented small tracts mapped in San Bernardino County</strong>,
+        about {caShare} percent of the California total and more than a third of the national one. The two
+        sources were compiled forty-five years apart using different methods, so the comparison is approximate.
+      </p>
+
+      <h2 id="timeline-h">Timeline</h2>
+      <ol class="timeline">
+        {timeline.map(([when, what]) => (<li><span class="when mono">{when}</span><span>{what}</span></li>))}
+      </ol>
+
+      <h2 id="sources">Sources</h2>
+      <p class="src-note">
+        Dates and figures from Desert Magazine were read from scanned issues at the Internet Archive. Where
+        later accounts disagree with what was printed at the time, this page follows the earlier source.
+      </p>
+      <ol class="sources">
+        {sources.map((s) => (<li id={`s-${s.id}`}><a href={s.url} rel="noopener">{s.label}</a></li>))}
+      </ol>
+      <p><a class="btn ghost" href={`${base}/resources/`}>Books and research resources <span class="arrow" aria-hidden="true">→</span></a></p>
+    </article>
+  </div>
+</Base>
+
+<style>
+  .story {
+    display: grid;
+    grid-template-columns: 13rem minmax(0, 1fr);
+    gap: clamp(2rem, 6vw, 6rem);
+    padding-block: clamp(3rem, 7vw, 6rem);
+    align-items: start;
+  }
+  .chapters {
+    position: sticky;
+    top: calc(var(--header-h) + 2rem);
+  }
+  .chapters ol {
+    list-style: none;
+    counter-reset: c;
+    margin: 1rem 0 0;
+    padding: 0;
+    display: grid;
+    gap: 0.6rem;
+    font-size: 0.98rem;
+  }
+  .chapters li {
+    counter-increment: c;
+    display: flex;
+    gap: 0.7rem;
+  }
+  .chapters li::before {
+    content: counter(c, decimal-leading-zero);
+    font-family: var(--font-mono);
+    font-size: 0.66rem;
+    color: var(--ink-3);
+    padding-top: 0.32em;
+  }
+  .chapters a {
+    text-decoration: none;
+    color: var(--ink-2);
+  }
+  .chapters a:hover {
+    color: var(--ochre);
+  }
+  .prose h2:first-child {
+    margin-top: 0;
+  }
+  .steps {
+    list-style: none;
+    counter-reset: s;
+    padding: 0;
+    margin: 2rem 0;
+    border-top: 1px solid var(--ink);
+  }
+  .steps li {
+    counter-increment: s;
+    position: relative;
+    padding: 1.1rem 0 1.1rem 3.4rem;
+    border-bottom: 1px solid var(--rule);
+  }
+  .steps li::before {
+    content: counter(s);
+    position: absolute;
+    left: 0;
+    top: 0.85rem;
+    font-family: var(--font-display);
+    font-size: 2.2rem;
+    line-height: 1;
+    font-weight: 400;
+    color: var(--ochre);
+  }
+  .in-chart {
+    margin: 2.6rem 0;
+    padding: 1.6rem clamp(1rem, 3vw, 2rem);
+    background: var(--paper-2);
+    border: 1px solid var(--rule);
+    border-radius: 12px;
+  }
+  .timeline {
+    list-style: none;
+    padding: 0;
+    margin: 1.6rem 0 0;
+    border-left: 1px solid var(--ochre);
+  }
+  .timeline li {
+    position: relative;
+    display: grid;
+    grid-template-columns: 6.2rem 1fr;
+    gap: 1rem;
+    padding: 0.55rem 0 0.55rem 1.4rem;
+    font-size: 0.96rem;
+    line-height: 1.45;
+  }
+  .timeline li::before {
+    content: '';
+    position: absolute;
+    left: -4px;
+    top: 1.05rem;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--ochre);
+  }
+  .timeline .when {
+    color: var(--ochre-deep);
+    font-size: 0.8rem;
+    padding-top: 0.15em;
+  }
+  .src-note {
+    font-size: 0.92rem;
+    color: var(--ink-3);
+  }
+  .sources {
+    padding-left: 1.6rem;
+    font-size: 0.9rem;
+    line-height: 1.45;
+    color: var(--ink-2);
+    display: grid;
+    gap: 0.45rem;
+  }
+  .sources li:target {
+    background: rgba(226, 160, 63, 0.25);
+  }
+  .sources a {
+    overflow-wrap: anywhere;
+  }
+  @media (max-width: 800px) {
+    .story {
+      grid-template-columns: 1fr;
+    }
+    .chapters {
+      position: static;
+    }
+    .timeline li {
+      grid-template-columns: 1fr;
+      gap: 0.1rem;
+    }
+  }
+</style>

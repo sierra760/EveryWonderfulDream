@@ -1,0 +1,95 @@
+---
+import Base from '../layouts/Base.astro';
+import PlaceCard from '../components/PlaceCard.astro';
+import { loadSummary } from '../lib/summary';
+
+const summary = loadSummary() as any;
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+const nf = new Intl.NumberFormat('en-US');
+const regions: Record<string, any[]> = {};
+for (const p of summary.places) if (p.tracts) (regions[p.region] ??= []).push(p);
+const regionNotes: Record<string, string> = {
+  'Morongo Basin': 'The valleys along Highway 62, from Morongo Valley east to Wonder Valley.',
+  'Victor Valley & Lucerne': 'Communities on the desert side of Cajon Pass, including Apple Valley.',
+  'Barstow & the Mojave River': 'Tracts around Barstow and along the Mojave River.',
+  'The far desert': 'Smaller groups of tracts farther out in the county.',
+};
+const placed = summary.tracts - summary.unplaced;
+---
+
+<Base title="Places" description="The communities of the San Bernardino County desert where small tracts were patented, from Wonder Valley to Apple Valley.">
+  <header class="page-hero wrap">
+    <p class="eyebrow">Places</p>
+    <h1>Where the <em>grid</em> landed</h1>
+    <p class="lede">
+      Small-tract patents cluster around a handful of desert communities. The atlas assigns
+      {nf.format(placed)} of its {nf.format(summary.tracts)} tracts to the
+      {' '}{summary.places.filter((p: any) => p.tracts).length} communities listed here based on proximity.
+    </p>
+  </header>
+
+  {Object.entries(regions).map(([region, list]) => (
+    <section class="region">
+      <div class="wrap">
+        <div class="region-head">
+          <h2>{region}</h2>
+          <p>{regionNotes[region]}</p>
+          <p class="mono tally">{nf.format(list.reduce((s, p) => s + p.tracts, 0))} tracts</p>
+        </div>
+        <div class="grid">
+          {list.map((p) => <PlaceCard place={p} />)}
+        </div>
+      </div>
+    </section>
+  ))}
+
+  <section class="section wrap-narrow">
+    <p class="eyebrow">A note on names</p>
+    <div class="prose" style="margin-top:1.2rem">
+      <p>
+        Patents locate land by township, range, and section. For browsing, the atlas groups each tract with
+        the nearest community when it’s close enough. The lines between places such as Landers and Flamingo
+        Heights are approximate. You can see all {nf.format(summary.unplaced)} outlying tracts on
+        <a href={`${base}/atlas/`}>the map</a>.
+      </p>
+    </div>
+  </section>
+</Base>
+
+<style>
+  .region {
+    padding-block: clamp(2.5rem, 6vw, 4.5rem);
+    border-bottom: 1px solid var(--rule);
+  }
+  .region-head {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr) auto;
+    gap: 1rem 3rem;
+    align-items: end;
+    margin-bottom: 2rem;
+  }
+  .region-head h2 {
+    font-size: clamp(1.9rem, 1.3rem + 2.4vw, 3.2rem);
+  }
+  .region-head p {
+    margin: 0;
+    color: var(--ink-2);
+  }
+  .tally {
+    font-size: 0.7rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--ochre) !important;
+    white-space: nowrap;
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 18.5rem), 1fr));
+    gap: 1.2rem;
+  }
+  @media (max-width: 800px) {
+    .region-head {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

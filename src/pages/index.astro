@@ -1,0 +1,613 @@
+---
+import Base from '../layouts/Base.astro';
+import YearChart from '../components/YearChart.astro';
+import PlaceCard from '../components/PlaceCard.astro';
+import { loadSummary } from '../lib/summary';
+
+const summary = loadSummary() as any;
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+const nf = new Intl.NumberFormat('en-US');
+
+const featured = [...summary.places].sort((a: any, b: any) => b.tracts - a.tracts).slice(0, 6);
+const years: Record<string, number> = summary.years;
+const peakYear = Object.entries(years).sort((a, b) => b[1] - a[1])[0];
+const rush = Object.entries(years).filter(([y]) => Number(y) >= 1955 && Number(y) <= 1961).reduce((s, [, n]) => s + n, 0);
+const rushShare = Math.round((rush / summary.tracts) * 100);
+const wonder = summary.places.find((p: any) => p.id === 'wonder-valley');
+---
+
+<Base overHero>
+  <!-- ───────────── hero ───────────── -->
+  <section class="hero on-night">
+    <div id="hero-map" class="map-fill" aria-hidden="true"></div>
+    <div class="hero-veil" aria-hidden="true"></div>
+    <div class="hero-inner wrap">
+      <p class="eyebrow">An atlas of the jackrabbit homesteads · San Bernardino County, California</p>
+      <h1>Every <em>Wonderful</em> Dream</h1>
+      <p class="hero-lede">
+        For thirty-eight years, federal law let people buy pieces of the desert five acres at a time.
+        This atlas documents <span class="num">{nf.format(summary.tracts)}</span> patented tracts in San
+        Bernardino County. Follow a tract from the survey grid to the patent and the name on it.
+      </p>
+      <div class="hero-cta">
+        <a class="btn glow" href={`${base}/atlas/`}>Open the map <span class="arrow" aria-hidden="true">→</span></a>
+        <a class="btn ghost" href={`${base}/history/`}>Read the history</a>
+      </div>
+    </div>
+    <div class="hero-bottom mono">
+      <button class="hero-motion" id="hero-motion" type="button" hidden>Pause flyover</button>
+      <p class="hero-caption"><span class="dot" aria-hidden="true"></span> Wonder Valley · {nf.format(wonder.tracts)} tracts</p>
+    </div>
+  </section>
+
+  <!-- ───────────── statement ───────────── -->
+  <section class="section wrap statement">
+    <p class="big reveal">
+      They called them <em>jackrabbit homesteads</em>. Under the Small Tract Act of 1938, applicants could
+      lease up to five acres of public land, build a cabin, and buy the tract at its appraised price.
+      In Wonder Valley and Landers, the roads still follow the survey grid. The paperwork is still there, too.
+    </p>
+    <dl class="numbers reveal">
+      <div><dt>Tracts patented</dt><dd class="num">{nf.format(summary.tracts)}</dd></div>
+      <div><dt>Acres</dt><dd class="num">{nf.format(summary.acres)}</dd></div>
+      <div><dt>Names on the patents</dt><dd class="num">{nf.format(summary.patentees)}</dd></div>
+      <div><dt>Busiest year</dt><dd class="num">{peakYear[0]}</dd></div>
+    </dl>
+  </section>
+
+  <!-- ───────────── find a name ───────────── -->
+  <section class="wrap finder reveal">
+    <form action={`${base}/names/`} method="get" role="search">
+      <label for="find-name">Search by surname</label>
+      <div class="row">
+        <input id="find-name" name="q" type="search" placeholder="Sem, Hillman, Blackstone…" autocomplete="off" spellcheck="false" required minlength="2" />
+        <button class="btn" type="submit">Search <span class="arrow" aria-hidden="true">→</span></button>
+      </div>
+    </form>
+    <p><a href={`${base}/names/`}>Browse the name index A–Z</a></p>
+  </section>
+
+  <div class="wrap"><div class="grid-rule"></div></div>
+
+  <!-- ───────────── the grid ───────────── -->
+  <section class="section wrap split">
+    <div class="section-head reveal">
+      <h2>A square mile, <em>cut 128 ways</em></h2>
+      <p>
+        A standard survey township is six miles on a side and divided into 36 one-square-mile sections. The
+        five-acre tract shown here measures 330 by 660 feet. Read its legal description,
+        <span class="mono">E½ NW¼ SW¼ SE¼</span>, from right to left. Within the southeast quarter of the
+        section, locate the southwest quarter, then its northwest quarter. The tract is the eastern half of
+        that subdivision.
+      </p>
+      <p><a class="btn ghost" href={`${base}/tract/?id=CALA-0060931`}>See Ruth Sem’s tract <span class="arrow" aria-hidden="true">→</span></a></p>
+    </div>
+    <figure class="nest reveal" aria-label="Diagram: a section subdivided down to a five-acre tract">
+      <svg viewBox="0 0 420 420" role="img">
+        <title>A 640-acre section divided into quarters, then into a 40-acre, a 10-acre, and a 5-acre tract</title>
+        <rect class="n-sec" x="10" y="10" width="400" height="400"></rect>
+        <path class="n-q" d="M210 10v400M10 210h400"></path>
+        <rect class="n-160" x="210" y="210" width="200" height="200"></rect>
+        <path class="n-q" d="M310 210v200M210 310h200"></path>
+        <rect class="n-40" x="210" y="310" width="100" height="100"></rect>
+        <path class="n-q" d="M260 310v100M210 360h100"></path>
+        <rect class="n-10" x="210" y="310" width="50" height="50"></rect>
+        <rect class="n-5" x="235" y="310" width="25" height="50"></rect>
+        <text class="n-t" x="22" y="34">Section 17 · 640 acres</text>
+        <text class="n-t" x="322" y="234">SE¼ · 160</text>
+        <text class="n-t" x="216" y="402">SW¼ SE¼ · 40</text>
+        <path class="n-lead" d="M196 335H241"></path>
+        <circle class="n-pin" cx="247" cy="335" r="3"></circle>
+        <text class="n-t n-me" x="188" y="331" text-anchor="end">E½ NW¼ SW¼ SE¼</text>
+        <text class="n-t n-me" x="188" y="347" text-anchor="end">5 acres</text>
+        <text class="n-c" x="210" y="6" text-anchor="middle">N</text>
+      </svg>
+      <figcaption>Section 17, Township 1 North, Range 11 East: the five acres patented to Ruth Sem in 1952.</figcaption>
+    </figure>
+  </section>
+
+  <!-- ───────────── the rush ───────────── -->
+  <section class="section rush">
+    <div class="wrap">
+      <div class="section-head reveal">
+        <h2>The rush <em>for desert land</em></h2>
+        <p>
+          Applications opened in 1940, but wartime rationing slowed construction. The land office issued
+          {nf.format(rush)} patents from 1955 to 1961, about {rushShare}% of the county total recorded in this
+          atlas. The annual count peaked in {peakYear[0]} and fell sharply afterward.
+        </p>
+      </div>
+      <div class="reveal"><YearChart years={years} /></div>
+    </div>
+  </section>
+
+  <!-- ───────────── places ───────────── -->
+  <section class="section places-sec on-night">
+    <div class="wrap">
+      <div class="section-head reveal">
+        <h2>Ghost grids, <em>valley by valley</em></h2>
+        <p>
+          Each dot marks a tract. With the roads left out, you can see the pattern the patents made.
+          Select a community to explore it on the map.
+        </p>
+      </div>
+      <div class="place-grid">
+        {featured.map((p: any) => (<div class="reveal"><PlaceCard place={p} /></div>))}
+      </div>
+      <p class="more"><a class="btn ghost" href={`${base}/places/`}>All {summary.places.filter((p: any) => p.tracts).length} places <span class="arrow">→</span></a></p>
+    </div>
+  </section>
+
+  <!-- ───────────── the patent ───────────── -->
+  <section class="section wrap doc" id="the-paper">
+    <div class="section-head reveal">
+      <h2>What the government <em>actually said</em></h2>
+      <p>
+        On May 23, 1952, the United States issued Ruth Sem a land patent for five acres in Wonder Valley.
+        The annotations identify the information used to connect the patent to its case file and survey location.
+      </p>
+    </div>
+    <div class="doc-grid">
+      <div class="sheet reveal">
+        <div class="s-top"><span><mark data-n="1">Los Angeles 060931</mark></span><span>4–1040<br />(October 1948)</span></div>
+        <p class="s-usa">The United States of America,</p>
+        <p class="s-greet">To all to whom these presents shall come, Greeting:</p>
+        <p>
+          WHEREAS, a Certificate of the Land Office at Los Angeles, California, is now deposited in the Bureau of
+          Land Management, whereby it appears that full payment has been made by <mark data-n="2">Ruth Sem</mark>,
+          pursuant to the provisions of the <mark data-n="3">Act of Congress approved June 1, 1938 (52 Stat. 609),
+          entitled “An Act to provide for the purchase of public lands for home and other sites”</mark>, and the acts
+          supplemental thereto, for the following described land:
+        </p>
+        <p class="s-land">
+          San Bernardino Meridian, California.<br />
+          <mark data-n="4">T. 1 N., R. 11 E.,<br />Sec. 17, E½NW¼SW¼SE¼.</mark>
+        </p>
+        <p>
+          The area described contains <mark data-n="5">5 acres</mark>, according to the Official Plat of the Survey
+          of the said Land, on file in the Bureau of Land Management:
+        </p>
+        <p>
+          NOW KNOW YE, that the UNITED STATES OF AMERICA, in consideration of the premises, and in conformity with
+          the several Acts of Congress in such case made and provided, HAS GIVEN AND GRANTED, and by these presents
+          DOES GIVE AND GRANT unto the said Ruth Sem and to her heirs, the Tract above described; TO HAVE AND TO
+          HOLD the same, together with all the rights, privileges, immunities, and appurtenances, of whatsoever
+          nature, thereunto belonging, unto the said Ruth Sem …
+        </p>
+        <p class="s-foot">Transcribed from the opening of the original patent, accession SER-1135268, BLM General Land Office Records.</p>
+      </div>
+      <ol class="notes reveal">
+        <li><strong>The serial number.</strong> Every application got one at the land office where it was filed. Together with the patent number it is how the National Archives finds the case file, and it is the address of each tract in this atlas.</li>
+        <li><strong>The patentee.</strong> Ruth Sem is the person who received title. Her application and correspondence would be in the case file.</li>
+        <li><strong>The law.</strong> This is the full title of what became known as the Small Tract Act.</li>
+        <li><strong>The land.</strong> The township, range, section, and fractions locate Ruth Sem’s tract on the survey grid.</li>
+        <li><strong>The size.</strong> Five acres was the limit. Thousands of tracts were smaller, including many of two and a half acres.</li>
+      </ol>
+    </div>
+    <p class="doc-cta reveal">
+      <a class="btn" href={`${base}/tract/?id=CALA-0060931`}>Open Ruth Sem’s record <span class="arrow" aria-hidden="true">→</span></a>
+      <a class="btn ghost" href={`${base}/resources/`}>Books and research resources</a>
+    </p>
+  </section>
+</Base>
+
+<style>
+  /* hero */
+  .hero {
+    position: relative;
+    min-height: max(40rem, 100svh);
+    padding-top: calc(var(--header-h) + 1rem);
+    background: radial-gradient(120% 90% at 70% 0%, var(--dusk) 0%, var(--night) 62%);
+    color: #f8efdc;
+    overflow: hidden;
+    display: flex;
+    align-items: flex-end;
+  }
+  .hero-veil {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background:
+      linear-gradient(to top, color-mix(in srgb, var(--night) 96%, transparent), color-mix(in srgb, var(--night) 72%, transparent) 30%, color-mix(in srgb, var(--night) 10%, transparent) 62%, transparent),
+      linear-gradient(100deg, color-mix(in srgb, var(--night) 55%, transparent), transparent 55%),
+      linear-gradient(to bottom, color-mix(in srgb, var(--dusk) 55%, transparent), transparent 30%);
+  }
+  .hero-inner {
+    position: relative;
+    padding-bottom: clamp(4.5rem, 10vh, 7.5rem);
+  }
+  .hero h1 {
+    font-size: clamp(2.6rem, 0.95rem + 8.9vw, 9rem);
+    line-height: 0.99;
+    letter-spacing: -0.045em;
+    font-weight: 420;
+    margin: 1.4rem 0 0 -0.04em;
+    text-shadow: 0 4px 60px color-mix(in srgb, var(--night) 60%, transparent);
+  }
+  .hero h1 em {
+    font-weight: 500;
+  }
+  .hero-lede {
+    margin: clamp(1.4rem, 3vw, 2.2rem) 0 0;
+    max-width: 37rem;
+    font-size: clamp(1.05rem, 0.95rem + 0.5vw, 1.32rem);
+    line-height: 1.5;
+    color: rgba(248, 239, 220, 0.9);
+  }
+  .hero-lede .num {
+    color: var(--glow);
+  }
+  .hero-cta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.8rem;
+    margin-top: 2rem;
+  }
+  .hero-bottom {
+    position: absolute;
+    left: var(--gutter);
+    right: calc(var(--gutter) + 1.6rem);
+    bottom: 0.85rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+  }
+  .hero-motion {
+    padding: 0.35rem 0.65rem;
+    border: 1px solid var(--rule-night);
+    border-radius: 999px;
+    min-height: 2rem;
+    background: var(--night);
+    color: inherit;
+    font: inherit;
+    white-space: nowrap;
+    cursor: pointer;
+  }
+  .hero-motion:hover {
+    border-color: var(--glow);
+  }
+  .hero-caption {
+    margin: 0;
+    margin-inline-start: auto;
+    font-size: 0.64rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: rgba(248, 239, 220, 0.66);
+    display: flex;
+    align-items: center;
+    gap: 0.6em;
+  }
+  .hero-caption .dot {
+    flex: none;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--glow);
+    box-shadow: 0 0 10px 2px rgba(255, 214, 140, 0.7);
+  }
+  @media (max-width: 700px) {
+    .hero-inner {
+      padding-bottom: 4.2rem;
+    }
+  }
+
+  /* statement */
+  .statement .big {
+    font-family: var(--font-display);
+    font-size: clamp(1.55rem, 1.05rem + 2.3vw, 3rem);
+    line-height: 1.22;
+    font-weight: 400;
+    letter-spacing: -0.012em;
+    max-width: 24em;
+    margin: 0;
+  }
+  .statement .big em {
+    color: var(--ochre);
+  }
+  .numbers {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    margin: clamp(3rem, 6vw, 5rem) 0 0;
+    border-top: 1px solid var(--ink);
+  }
+  .numbers > div {
+    padding: 1.2rem 1rem 0 0;
+  }
+  .numbers dt {
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+  }
+  .numbers dd {
+    margin: 0.4rem 0 0;
+    font-family: var(--font-display);
+    font-size: clamp(2.2rem, 1.2rem + 4vw, 5rem);
+    line-height: 1;
+    font-weight: 400;
+    letter-spacing: -0.02em;
+  }
+  @media (max-width: 700px) {
+    .numbers {
+      grid-template-columns: 1fr 1fr;
+      row-gap: 1.2rem;
+    }
+  }
+
+  /* find a name */
+  .finder {
+    padding-bottom: clamp(3rem, 7vw, 6rem);
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.9rem;
+  }
+  .finder label {
+    display: block;
+    font-family: var(--font-display);
+    font-style: italic;
+    font-size: clamp(1.4rem, 1.1rem + 1.4vw, 2.2rem);
+    margin-bottom: 1rem;
+  }
+  .finder .row {
+    display: flex;
+    gap: 0.7rem;
+    max-width: 38rem;
+  }
+  .finder input {
+    flex: 1;
+    min-width: 0;
+    font-family: var(--font-display);
+    font-size: 1.3rem;
+    color: var(--ink);
+    background: color-mix(in srgb, var(--paper) 45%, white);
+    border: 1px solid var(--ink);
+    border-radius: 999px;
+    padding: 0.7rem 1.3rem;
+  }
+  .finder input:focus-visible {
+    border-color: var(--ochre);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--ochre) 18%, transparent);
+  }
+  .finder p {
+    margin: 0;
+    font-size: 0.95rem;
+    color: var(--ink-2);
+  }
+
+  /* the grid */
+  .split {
+    display: grid;
+    grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+    gap: clamp(2rem, 6vw, 6rem);
+    align-items: center;
+  }
+  .split .section-head {
+    margin-bottom: 0;
+  }
+  .split .section-head p + p {
+    margin-top: 0.6rem;
+  }
+  @media (max-width: 860px) {
+    .split {
+      grid-template-columns: 1fr;
+    }
+  }
+  .nest {
+    margin: 0;
+  }
+  .nest svg {
+    display: block;
+    width: 100%;
+    height: auto;
+    overflow: visible;
+  }
+  .nest figcaption {
+    margin-top: 1rem;
+    font-size: 0.88rem;
+    color: var(--ink-3);
+  }
+  .n-sec { fill: var(--paper-2); stroke: var(--ink); stroke-width: 1.5; }
+  .n-160 { fill: #e3d5b6; }
+  .n-40 { fill: #d6c193; }
+  .n-10 { fill: #cba96b; }
+  .n-5 { fill: var(--ochre); }
+  .n-q { stroke: var(--rule-strong); stroke-width: 0.8; fill: none; }
+  .n-t { font-family: var(--font-mono); font-size: 10.5px; fill: var(--ink-2); letter-spacing: 0.04em; }
+  .n-me { fill: var(--ochre-deep); font-weight: 500; }
+  .n-lead { stroke: var(--ochre-deep); stroke-width: 1; fill: none; }
+  .n-pin { fill: #fff7e8; }
+  .n-c { font-family: var(--font-mono); font-size: 10px; fill: var(--ink-3); }
+
+  /* the rush */
+  .rush {
+    background: var(--paper-2);
+    border-block: 1px solid var(--rule);
+  }
+
+  /* places */
+  .places-sec {
+    background: var(--night);
+    color: #f3e8d4;
+  }
+  .place-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 19rem), 1fr));
+    gap: 1.2rem;
+  }
+  .place-grid > div {
+    display: grid;
+  }
+  .more {
+    margin: 2.5rem 0 0;
+  }
+
+  /* the patent */
+  .doc-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.25fr) minmax(0, 0.75fr);
+    gap: clamp(2rem, 5vw, 5rem);
+    align-items: start;
+  }
+  @media (max-width: 900px) {
+    .doc-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+  .sheet {
+    position: relative;
+    background: #fbf6ea;
+    color: #2a2118;
+    padding: clamp(1.6rem, 4.5vw, 3.6rem);
+    border: 1px solid var(--paper-3);
+    box-shadow: 0 1px 0 #fff inset, 0 40px 70px -40px rgba(36, 27, 19, 0.45), 0 2px 6px rgba(36, 27, 19, 0.08);
+    font-family: var(--font-type);
+    font-size: clamp(0.93rem, 0.86rem + 0.3vw, 1.05rem);
+    line-height: 1.55;
+    transform: rotate(-0.35deg);
+  }
+  .sheet p {
+    margin: 0 0 1.1em;
+    text-wrap: wrap;
+  }
+  .s-top {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    font-size: 0.88em;
+    line-height: 1.3;
+  }
+  .s-top span:last-child {
+    text-align: center;
+    font-family: var(--font-body);
+    font-size: 0.85em;
+  }
+  .sheet .s-usa {
+    font-family: var(--font-black);
+    font-size: clamp(2rem, 1.2rem + 3.6vw, 3.6rem);
+    line-height: 1;
+    text-align: center;
+    margin: 1.4rem 0 0.4rem;
+  }
+  .sheet .s-greet {
+    text-align: center;
+    font-family: var(--font-body);
+    font-weight: 600;
+    margin-bottom: 1.8em;
+  }
+  .sheet .s-land {
+    text-align: center;
+  }
+  .sheet .s-foot {
+    margin: 1.6rem 0 0;
+    padding-top: 1rem;
+    border-top: 1px dashed rgba(36, 27, 19, 0.3);
+    font-family: var(--font-body);
+    font-size: 0.82rem;
+    color: #7a6d5c;
+    line-height: 1.4;
+  }
+  .sheet mark {
+    background: linear-gradient(transparent 58%, rgba(226, 160, 63, 0.5) 58%);
+    color: inherit;
+    padding: 0 0.1em;
+  }
+  .sheet mark::after {
+    content: attr(data-n);
+    font-family: var(--font-mono);
+    font-size: 0.62em;
+    font-weight: 500;
+    vertical-align: super;
+    color: var(--ochre);
+    margin-left: 0.25em;
+  }
+  .notes {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    counter-reset: n;
+    display: grid;
+    gap: 0;
+    border-top: 1px solid var(--ink);
+  }
+  .notes li {
+    counter-increment: n;
+    position: relative;
+    padding: 1.1rem 0 1.1rem 2.6rem;
+    border-bottom: 1px solid var(--rule);
+    font-size: 0.98rem;
+    line-height: 1.5;
+    color: var(--ink-2);
+  }
+  .notes li::before {
+    content: counter(n);
+    position: absolute;
+    left: 0;
+    top: 1.15rem;
+    width: 1.6rem;
+    height: 1.6rem;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    background: var(--ochre);
+    color: #fff7e8;
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+  }
+  .notes strong {
+    color: var(--ink);
+    font-weight: 600;
+  }
+  .doc-cta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.8rem;
+    margin: clamp(2.5rem, 5vw, 4rem) 0 0;
+  }
+</style>
+
+<script>
+  import { getJson, getTownship, tractFeature } from '../lib/data';
+  import { addLights, addTractLayers, createMap, orbit } from '../lib/map';
+
+  const el = document.getElementById('hero-map')!;
+  const start = () => {
+    const map = createMap({
+      container: el,
+      mood: 'dusk',
+      center: [-115.895, 34.158],
+      zoom: 12.35,
+      pitch: 72,
+      bearing: 24,
+      interactive: false,
+      exaggeration: 1.7,
+    });
+    if (!map) return;
+    map.on('load', async () => {
+      const [lights, a, b] = await Promise.all([
+        getJson<number[]>('lights.json'),
+        getTownship('S-1N-10E'),
+        getTownship('S-1N-11E'),
+      ]);
+      map.addSource('hero-tracts', {
+        type: 'geojson',
+        data: { type: 'FeatureCollection', features: [...a.tracts, ...b.tracts].filter((t) => !t.approx).map((t) => tractFeature(t)) },
+      });
+      addTractLayers(map, 'hero-tracts', 'hero', { minzoom: 8 });
+      addLights(map, lights, 16);
+      const flyover = orbit(map, 1.1);
+      const motion = document.querySelector<HTMLButtonElement>('#hero-motion');
+      if (!motion || !flyover.running) return;
+      motion.hidden = false;
+      motion.addEventListener('click', () => {
+        if (flyover.running) flyover.stop();
+        else flyover.start();
+        motion.textContent = flyover.running ? 'Pause flyover' : 'Resume flyover';
+      });
+    });
+  };
+  // let the page paint before the map takes the main thread
+  if ('requestIdleCallback' in window) requestIdleCallback(start, { timeout: 1200 });
+  else setTimeout(start, 200);
+</script>

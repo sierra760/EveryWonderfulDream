@@ -1,0 +1,158 @@
+---
+import '@fontsource-variable/biorhyme';
+import '@fontsource-variable/petrona';
+import '@fontsource-variable/petrona/wght-italic.css';
+import '@fontsource-variable/sometype-mono';
+import '@fontsource/cutive-mono/400.css';
+import '@fontsource/old-standard-tt/400.css';
+import '@fontsource/old-standard-tt/400-italic.css';
+import '@fontsource/unifrakturmaguntia/400.css';
+import '../styles/global.css';
+
+interface Props {
+  title?: string;
+  description?: string;
+  /** header floats over a dark hero / map */
+  overHero?: boolean;
+  /** dark page (atlas) */
+  night?: boolean;
+  /** full-viewport app page: no footer */
+  app?: boolean;
+}
+
+const {
+  title,
+  description = 'Explore the jackrabbit homesteads of San Bernardino County, California. Find a tract on the map, search by surname, or look up the land patent.',
+  overHero = false,
+  night = false,
+  app = false,
+} = Astro.props;
+
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+const fullTitle = title ? `${title} · Every Wonderful Dream` : 'Every Wonderful Dream · An atlas of the jackrabbit homesteads';
+const here = Astro.url.pathname.replace(/\/$/, '') || '/';
+const nav = [
+  { href: '/atlas/', label: 'Atlas' },
+  { href: '/names/', label: 'Names' },
+  { href: '/places/', label: 'Places' },
+  { href: '/history/', label: 'History' },
+  { href: '/resources/', label: 'Resources' },
+  { href: '/about/', label: 'About' },
+];
+const isCurrent = (href: string) => here.startsWith(`${base}${href}`.replace(/\/$/, ''));
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>{fullTitle}</title>
+    <meta name="description" content={description} />
+    <meta property="og:title" content={fullTitle} />
+    <meta property="og:description" content={description} />
+    <meta property="og:type" content="website" />
+    <meta name="theme-color" content={night || overHero ? '#151f1a' : '#edf0e7'} />
+    <link rel="icon" type="image/svg+xml" href={`${base}/favicon.svg`} />
+    <script is:inline>document.documentElement.classList.add('js');</script>
+  </head>
+  <body class:list={[{ night }, { app }]}>
+    <a class="skip-link" href="#main">Skip to content</a>
+    <header class:list={['site-header', { over: overHero || night }]}>
+      <a class="wordmark" href={`${base}/`} aria-label="Every Wonderful Dream, home">
+        <svg viewBox="0 0 32 32" fill="none" aria-hidden="true">
+          <rect x="3.5" y="3.5" width="25" height="25" stroke="currentColor" stroke-width="1.4"></rect>
+          <path d="M16 3.5v25M3.5 16h25" stroke="currentColor" stroke-width=".7" opacity=".45"></path>
+          <rect x="19.2" y="7.6" width="5" height="4.2" fill="#e2a03f"></rect>
+        </svg>
+        <span>Every <em>Wonderful</em> Dream</span>
+      </a>
+      <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="site-nav">Menu</button>
+      <nav class="site-nav" id="site-nav" aria-label="Main">
+        {nav.map((n) => (
+          <a href={`${base}${n.href}`} aria-current={isCurrent(n.href) ? 'page' : undefined}>{n.label}</a>
+        ))}
+      </nav>
+    </header>
+
+    <main id="main" tabindex="-1">
+      <slot />
+    </main>
+
+    {!app && (
+      <footer class="site-footer on-night">
+        <div class="wrap">
+          <div class="cols">
+            <div>
+              <p class="colophon">To all to whom these presents shall come, Greeting.</p>
+              <p style="max-width: 34rem; opacity: .78;">
+                Every Wonderful Dream is an independent atlas of the Small Tract Act homesteads of San
+                Bernardino County, California. It uses public land records from the Bureau of Land
+                Management and other federal agencies.
+              </p>
+            </div>
+            <div>
+              <h3>The atlas</h3>
+              <ul>
+                {nav.map((n) => (<li><a href={`${base}${n.href}`}>{n.label}</a></li>))}
+              </ul>
+            </div>
+            <div>
+              <h3>The record</h3>
+              <ul>
+                <li><a href="https://glorecords.blm.gov/" rel="noopener">BLM GLO Records ↗</a></li>
+                <li><a href="https://www.archives.gov/research/land" rel="noopener">National Archives land records ↗</a></li>
+                <li><a href={`${base}/about/#sources`}>Sources &amp; method</a></li>
+                <li><a href={`${base}/about/#corrections`}>Corrections</a></li>
+              </ul>
+            </div>
+          </div>
+          <div class="fine">
+            <span>Land records: U.S. Bureau of Land Management · Imagery &amp; terrain: USGS, Mapzen/AWS</span>
+            <span>Created by <a href="https://www.sierraburkhart.com/">Sierra Burkhart</a></span>
+          </div>
+        </div>
+      </footer>
+    )}
+
+    <script>
+      const toggle = document.querySelector<HTMLButtonElement>('.nav-toggle');
+      const nav = document.getElementById('site-nav');
+      if (toggle && nav) {
+        const setOpen = (open: boolean) => {
+          nav.classList.toggle('open', open);
+          toggle.setAttribute('aria-expanded', String(open));
+        };
+        toggle.addEventListener('click', () => setOpen(!nav.classList.contains('open')));
+        toggle.closest('header')?.addEventListener('keydown', (event) => {
+          if (event.key !== 'Escape' || !nav.classList.contains('open')) return;
+          setOpen(false);
+          toggle.focus();
+        });
+      }
+
+      // a header floating over a dark hero turns solid once the hero is behind it
+      const header = document.querySelector<HTMLElement>('.site-header.over');
+      const hero = document.querySelector<HTMLElement>('main > section, main > article > section');
+      if (header && hero && !document.body.classList.contains('app')) {
+        const update = () => header.classList.toggle('solid', window.scrollY > hero.offsetHeight - header.offsetHeight - 8);
+        addEventListener('scroll', update, { passive: true });
+        addEventListener('resize', update);
+        update();
+      }
+
+      const io = new IntersectionObserver(
+        (entries) => {
+          for (const e of entries) {
+            if (e.isIntersecting) {
+              e.target.classList.add('in');
+              io.unobserve(e.target);
+            }
+          }
+        },
+        { rootMargin: '0px 0px -8% 0px', threshold: 0.08 },
+      );
+      document.querySelectorAll('.reveal').forEach((el) => io.observe(el));
+    </script>
+  </body>
+</html>

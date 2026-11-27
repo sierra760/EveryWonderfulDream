@@ -1,0 +1,232 @@
+---
+import Base from '../layouts/Base.astro';
+import { loadSummary } from '../lib/summary';
+
+const summary = loadSummary() as any;
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+const nf = new Intl.NumberFormat('en-US');
+---
+
+<Base title="About" description="Meet the creator of Every Wonderful Dream and learn how the atlas uses federal land records to map San Bernardino County’s small tracts.">
+  <header class="page-hero wrap about-hero">
+    <div>
+      <p class="eyebrow">About</p>
+      <h1>How the atlas <em>was made</em></h1>
+      <p class="lede">
+        Every Wonderful Dream takes its name from Wonder Valley, east of Twentynine Palms, where many
+        dirt roads still follow the public land survey. The atlas traces that survey through the federal
+        land records for San Bernardino County.
+      </p>
+      <p class="byline">Created by <strong><a href="https://www.sierraburkhart.com/">Sierra Burkhart</a></strong></p>
+      <p class="creator-note">
+        I own several adjacent tracts in Wonder Valley and have restored a homestead cabin on one of them,
+        so the history documented here is as personal to me as the Morongo Basin sand that crept under my
+        fingernails while I rebuilt the cabin. I earned my Ph.D. in geography at UCLA, where I built a
+        graduate degree program and taught GIS and cartography. My work in web mapping informs how I bring
+        the land records and survey grid together in this atlas.
+      </p>
+    </div>
+    <figure class="cabin-photo">
+      <img
+        src={`${base}/images/wonder-valley-cabin.webp`}
+        width="960"
+        height="1280"
+        alt="Pale green cabin with white trim and desert mountains behind it"
+        fetchpriority="high"
+      />
+      <figcaption>My cabin in Wonder Valley.</figcaption>
+    </figure>
+  </header>
+
+  <section class="section wrap cols">
+    <nav class="toc" aria-label="About sections">
+      <p class="label">On this page</p>
+      <ul>
+        <li><a href="#sources">Sources</a></li>
+        <li><a href="#method">Method</a></li>
+        <li><a href="#limits">What is uncertain</a></li>
+        <li><a href="#missing">What is missing</a></li>
+        <li><a href="#corrections">Corrections</a></li>
+        <li><a href="#credits">Credits</a></li>
+      </ul>
+    </nav>
+
+    <div class="prose">
+      <h2 id="sources">Sources</h2>
+      <p>
+        <strong>The tracts</strong> come from the Bureau of Land Management’s Mineral &amp; Land Records System.
+        The agency uses the legal descriptions in its case records to draw tract boundaries on the Public Land
+        Survey grid. For San Bernardino County, the atlas includes {nf.format(summary.tracts)} patented tracts
+        and {nf.format(summary.classifications)} cases shown as “classified land.” This release of the atlas
+        data was generated on <time datetime={summary.generated}>{summary.generated}</time>.
+      </p>
+      <p>
+        <strong>Section lines</strong> come from BLM’s national Public Land Survey System dataset (CadNSDI).
+        <strong>Imagery and topographic maps</strong> are served live by the U.S. Geological Survey’s National Map,
+        with aerial photography from the USDA National Agriculture Imagery Program at close range.
+        <strong>Terrain</strong> is the open Mapzen terrain tile set hosted by Amazon Web Services.
+        <strong>The county line</strong> is the Census Bureau’s. The federal data is in the public domain.
+      </p>
+      <p>
+        <strong>Names and dates</strong> come from BLM’s own index of California land patents, which the
+        agency released under the Freedom of Information Act in 1997 and which Larry Vredenburgh has published
+        ever since at <a href="https://vredenburgh.org/capatents/" rel="noopener">vredenburgh.org</a>. It lists
+        each patent’s number, case serial, date and patentees. Joined to the map layer by patent number, it
+        supplies a name and a date for {nf.format(summary.withNames)} of the {nf.format(summary.tracts)} tracts.
+      </p>
+      <p>
+        <strong>The patents themselves</strong> are at BLM’s
+        <a href="https://glorecords.blm.gov/" rel="noopener">General Land Office Records</a>, the official
+        archive. Each tract page links to its patent there, and where a name or date has been checked against
+        the document the page says so.
+      </p>
+
+      <h2 id="method">Method</h2>
+      <p>
+        Records with the same land-office serial number are combined. The center of the mapped outline
+        determines county inclusion, community assignment, and the point at which elevation is sampled.
+        For regular subdivisions such as <span class="mono">E½ NW¼ SW¼ SE¼</span>, acreage is calculated from
+        the legal description. For irregular tracts it is calculated from the mapped outline.
+      </p>
+
+      <h2 id="limits">What is uncertain</h2>
+      <p>
+        <strong>Dates.</strong> Most dates come from BLM’s patent index. For the
+        {' '}{nf.format(summary.tracts - summary.withDates)} tracts without an indexed date, the atlas estimates
+        the year from the patent number and marks it “c.” Patents belonged to a single national number series
+        until 1964. On records with known dates, the estimate matched the year 97 times in 100 and rarely
+        missed by more than a year.
+      </p>
+      <p>
+        <strong>Names.</strong> The index is in capitals, surname first, and cuts every name off at thirty
+        characters. The atlas turns <span class="mono">SEM RUTH</span> into Ruth Sem by rule, which will
+        misplace the occasional two-word surname. Each tract page also shows the original index entry.
+        Check the scanned patent if you need to confirm a name.
+      </p>
+      <p>
+        <strong>Outlines.</strong> BLM draws tract boundaries from legal descriptions. In some cases its map
+        shows only the square-mile section. The atlas subdivides those sections where the description allows
+        it, which gives outlines for {nf.format(summary.derived)} tracts. In a comparison with 12,000 five-acre
+        tracts already mapped by BLM, half of the derived outlines came within about a yard of BLM’s and
+        nine in ten came within 40 feet. The remaining {nf.format(summary.approximate)} tracts, mostly numbered
+        lots, have records here but no individual outlines. Tract pages also flag cases where the mapped area
+        differs substantially from the acreage in the description.
+      </p>
+      <p>
+        <strong>Completeness.</strong> The atlas holds what BLM has mapped. Leases that were never patented,
+        relinquished claims and tracts whose cases were never entered in the modern system are not here.
+      </p>
+
+      <h2 id="missing">What is missing</h2>
+      <p>
+        <strong>Patent images.</strong> BLM holds a scan of every patent. The atlas links to each one and will
+        show the image on the tract page as they are gathered.
+      </p>
+      <p>
+        <strong>Applications without patents.</strong> By the national count, more than half of small-tract
+        applicants never received a patent. The National Archives at Riverside holds the files for cancelled
+        and relinquished entries from the Los Angeles land office.
+      </p>
+      <p>
+        <strong>What happened after the patent.</strong> A patent is the first page of a story. For later
+        sales and parcel changes, start with the county recorder. Photographs and oral histories may tell
+        you more about who built the cabins and who lived in them.
+      </p>
+
+      <h2 id="corrections">Corrections</h2>
+      <p>
+        When documenting a correction, cite the tract’s serial number and the source for the revised
+        information. A patent scan or case file makes the correction easier to verify.
+      </p>
+
+      <h2 id="credits">Credits</h2>
+      <p>
+        Kim Stringfellow’s <em>Jackrabbit Homestead</em> documents the Small Tract Act across the Morongo
+        Basin. Larry Vredenburgh published the California patent index that supplies most of the names and
+        dates here. You can find both projects on the <a href={`${base}/resources/`}>Resources page</a>.
+      </p>
+      <p>
+        Maps are drawn with MapLibre GL JS. The site uses BioRhyme, Petrona, Old Standard TT, Sometype Mono,
+        Cutive Mono and UnifrakturMaguntia, all open-source.
+      </p>
+    </div>
+  </section>
+</Base>
+
+<style>
+  .about-hero {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(12rem, 18rem);
+    align-items: center;
+    gap: clamp(1.75rem, 5vw, 4.5rem);
+  }
+  .byline {
+    margin: 1.35rem 0 0.35rem;
+    color: var(--ink-2);
+    font-size: 0.95rem;
+  }
+  .byline strong {
+    color: var(--ink);
+  }
+  .creator-note {
+    margin: 0;
+    max-width: 36rem;
+    color: var(--ink-2);
+  }
+  .cabin-photo {
+    margin: 0;
+  }
+  .cabin-photo img {
+    display: block;
+    width: 100%;
+    height: auto;
+    border: 1px solid var(--rule);
+  }
+  .cabin-photo figcaption {
+    margin-top: 0.55rem;
+    color: var(--ink-3);
+    font-size: 0.85rem;
+  }
+  .cols {
+    display: grid;
+    grid-template-columns: 14rem minmax(0, 1fr);
+    gap: clamp(2rem, 6vw, 6rem);
+    align-items: start;
+  }
+  .toc {
+    position: sticky;
+    top: calc(var(--header-h) + 2rem);
+  }
+  .toc ul {
+    list-style: none;
+    margin: 1rem 0 0;
+    padding: 0;
+    display: grid;
+    gap: 0.55rem;
+    font-size: 0.98rem;
+  }
+  .toc a {
+    text-decoration: none;
+    color: var(--ink-2);
+  }
+  .toc a:hover {
+    color: var(--ochre);
+  }
+  .prose h2:first-child {
+    margin-top: 0;
+  }
+  @media (max-width: 800px) {
+    .about-hero {
+      grid-template-columns: 1fr;
+    }
+    .cabin-photo {
+      width: min(100%, 17rem);
+    }
+    .cols {
+      grid-template-columns: 1fr;
+    }
+    .toc {
+      position: static;
+    }
+  }
+</style>

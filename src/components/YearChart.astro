@@ -1,0 +1,199 @@
+---
+// Patents per year: one series, so one color and no legend. Thin columns
+// from a single baseline, direct label on the peak only, a hover read-out on
+// every column, and the full table underneath for anyone who wants numbers.
+interface Props {
+  years: Record<string, number>;
+  from?: number;
+  to?: number;
+}
+const { years, from = 1948, to = 1973 } = Astro.props;
+
+const data: { year: number; n: number }[] = [];
+for (let y = from; y <= to; y++) data.push({ year: y, n: years[y] ?? 0 });
+const max = Math.max(...data.map((d) => d.n));
+const peak = data.find((d) => d.n === max)!;
+const total = data.reduce((s, d) => s + d.n, 0);
+
+const W = 900, H = 340;
+const m = { top: 42, right: 18, bottom: 44, left: 100 };
+const iw = W - m.left - m.right, ih = H - m.top - m.bottom;
+const band = iw / data.length;
+const bw = Math.min(24, band - 2);
+const top = Math.ceil(max / 1000) * 1000;
+const y = (n: number) => m.top + ih - (n / top) * ih;
+const ticks = Array.from({ length: top / 1000 + 1 }, (_, i) => i * 1000);
+const nf = new Intl.NumberFormat('en-US');
+
+function column(d: { year: number; n: number }, i: number) {
+  const x = m.left + i * band + (band - bw) / 2;
+  const h = (d.n / top) * ih;
+  if (h < 0.5) return '';
+  const r = Math.min(4, h, bw / 2);
+  const yy = y(d.n), base = m.top + ih;
+  return `M${x},${base}V${yy + r}Q${x},${yy} ${x + r},${yy}H${x + bw - r}Q${x + bw},${yy} ${x + bw},${yy + r}V${base}Z`;
+}
+---
+
+<figure class="yc">
+  <div class="yc-plot">
+    <svg viewBox={`0 0 ${W} ${H}`} role="img" aria-label={`Column chart of small-tract patents per year in San Bernardino County, ${from} to ${to}. The peak is ${nf.format(max)} in ${peak.year}.`}>
+      {ticks.map((t) => (
+        <g>
+          <line class="yc-grid" x1={m.left} x2={W - m.right} y1={y(t)} y2={y(t)} />
+          <text class="yc-tick" x={m.left - 10} y={y(t)} text-anchor="end" dominant-baseline="central">{nf.format(t)}</text>
+        </g>
+      ))}
+      {data.map((d, i) => (
+        <g class="yc-col" data-year={d.year} data-n={nf.format(d.n)}>
+          <path class="yc-bar" d={column(d, i)} />
+          <rect class="yc-hit" x={m.left + i * band} y={m.top} width={band} height={ih} />
+          {(d.year % 2 === 0) && (
+            <text class:list={['yc-tick', { 'yc-tick-extra': d.year % 4 !== 0 }]} x={m.left + i * band + band / 2} y={H - m.bottom + 32} text-anchor="middle">{d.year}</text>
+          )}
+        </g>
+      ))}
+      <text class="yc-peak" x={m.left + data.indexOf(peak) * band + band / 2} y={y(max) - 10} text-anchor="middle">{nf.format(max)}</text>
+    </svg>
+    <div class="yc-tip" hidden></div>
+  </div>
+  <figcaption>
+    <slot>
+      Small-tract patents by year in San Bernardino County ({nf.format(total)} shown). Dates come from
+      the BLM patent index where available.
+    </slot>
+  </figcaption>
+  <details class="yc-table">
+    <summary>Year-by-year counts</summary>
+    <table>
+      <thead><tr><th scope="col">Year</th><th scope="col">Patents</th></tr></thead>
+      <tbody>
+        {data.map((d) => (<tr><th scope="row">{d.year}</th><td>{nf.format(d.n)}</td></tr>))}
+      </tbody>
+    </table>
+  </details>
+</figure>
+
+<style>
+  .yc {
+    margin: 0;
+    container-type: inline-size;
+  }
+  .yc-plot {
+    position: relative;
+  }
+  svg {
+    display: block;
+    width: 100%;
+    height: auto;
+    overflow: visible;
+  }
+  .yc-grid {
+    stroke: var(--rule);
+    stroke-width: 1;
+  }
+  .yc-tick {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    fill: var(--ink-3);
+  }
+  .yc-bar {
+    fill: var(--ochre);
+    transition: fill 0.15s;
+  }
+  .yc-hit {
+    fill: transparent;
+  }
+  .yc-col:hover .yc-bar {
+    fill: var(--ochre-deep);
+  }
+  .yc-peak {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    font-weight: 500;
+    fill: var(--ink);
+  }
+  .yc-tip {
+    position: absolute;
+    pointer-events: none;
+    transform: translate(-50%, -115%);
+    background: var(--ink);
+    color: var(--paper);
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    letter-spacing: 0.04em;
+    padding: 0.4rem 0.65rem;
+    border-radius: 6px;
+    white-space: nowrap;
+  }
+  figcaption {
+    margin-top: 1rem;
+    max-width: 44rem;
+    font-size: 0.9rem;
+    line-height: 1.45;
+    color: var(--ink-3);
+  }
+  .yc-table {
+    margin-top: 0.8rem;
+    font-size: 0.86rem;
+  }
+  .yc-table summary {
+    cursor: pointer;
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--ink-2);
+  }
+  .yc-table table {
+    margin-top: 0.8rem;
+    border-collapse: collapse;
+    font-variant-numeric: tabular-nums;
+  }
+  .yc-table th,
+  .yc-table td {
+    text-align: right;
+    padding: 0.2rem 1.4rem 0.2rem 0;
+    border-bottom: 1px solid var(--rule);
+    font-weight: 400;
+  }
+  /* the SVG scales with its container, so scale the type back up as it narrows */
+  @container (max-width: 760px) {
+    .yc-tick {
+      font-size: 15px;
+    }
+    .yc-peak {
+      font-size: 16px;
+    }
+  }
+  @container (max-width: 480px) {
+    .yc-tick {
+      font-size: 29px;
+    }
+    .yc-peak {
+      font-size: 30px;
+    }
+    .yc-tick-extra {
+      display: none;
+    }
+  }
+</style>
+
+<script>
+  document.querySelectorAll<HTMLElement>('.yc-plot').forEach((plot) => {
+    const tip = plot.querySelector<HTMLElement>('.yc-tip')!;
+    plot.querySelectorAll<SVGGElement>('.yc-col').forEach((col) => {
+      const show = () => {
+        const bar = col.querySelector('.yc-hit')!.getBoundingClientRect();
+        const path = col.querySelector('.yc-bar')!.getBoundingClientRect();
+        const box = plot.getBoundingClientRect();
+        tip.textContent = `${col.dataset.year} · ${col.dataset.n} patents`;
+        tip.style.left = `${bar.left + bar.width / 2 - box.left}px`;
+        tip.style.top = `${(path.height ? path.top : bar.bottom) - box.top}px`;
+        tip.hidden = false;
+      };
+      col.addEventListener('pointerenter', show);
+      col.addEventListener('pointerleave', () => (tip.hidden = true));
+    });
+  });
+</script>

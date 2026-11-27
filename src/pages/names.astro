@@ -1,14 +1,15 @@
 ---
 import Base from '../layouts/Base.astro';
+import NameTallies from '../components/NameTallies.astro';
 import { loadSummary } from '../lib/summary';
 
-const summary = loadSummary() as any;
+const summary = loadSummary();
 const nf = new Intl.NumberFormat('en-US');
-const letters: [string, number][] = Object.entries(summary.nameLetters ?? {});
-const places = summary.places.map((p: any) => p.name);
+const letters = Object.entries(summary.nameLetters ?? {});
+const places = summary.places.map((p) => p.name);
 ---
 
-<Base title="Names" description={`An A–Z index of the ${nf.format(summary.patentees)} people named on small-tract patents in San Bernardino County.`}>
+<Base title="Names" description={`Explore ${nf.format(summary.patentees)} name entries on San Bernardino County’s small-tract patents, with an A–Z index and rankings.`}>
   <header class="page-hero wrap">
     <p class="eyebrow">Names</p>
     <h1>The people <em>on the patents</em></h1>
@@ -16,21 +17,24 @@ const places = summary.places.map((p: any) => p.name);
       Find a surname and follow it to the land. The index lists {nf.format(summary.patentees)} names from
       the Bureau of Land Management’s records for {nf.format(summary.withNames)} patents.
     </p>
+    <a class="tallies-link" href="#name-tallies">Explore the name tallies <span aria-hidden="true">↓</span></a>
   </header>
 
-  <section class="wrap names" id="names" data-places={JSON.stringify(places)}>
+  <section class="wrap names" id="names" tabindex="-1" data-places={JSON.stringify(places)}>
     <div class="bar">
       <label class="sr-only" for="nq">Surname</label>
       <input id="nq" name="q" type="search" placeholder="Try Sem…" autocomplete="off" spellcheck="false" />
       <nav class="letters" aria-label="Initial">
         {letters.map(([l, n]) => (
-          <a href={`?l=${l}`} data-letter={l} title={`${nf.format(n)} names`}>{l}</a>
+          <a href={`?l=${encodeURIComponent(l)}`} data-letter={l} title={`${nf.format(n)} names`}>{l}</a>
         ))}
       </nav>
     </div>
     <p class="status mono" id="nstatus" aria-live="polite">Choose a letter, or type a surname.</p>
     <ol class="list" id="nlist"></ol>
   </section>
+
+  <NameTallies />
 
   <section class="section wrap-narrow">
     <div class="prose" style="margin-top:1.2rem">
@@ -50,6 +54,11 @@ const places = summary.places.map((p: any) => p.name);
 </Base>
 
 <style is:global>
+  .tallies-link {
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    color: var(--ochre-deep);
+  }
   .names {
     padding-block: clamp(2rem, 5vw, 3.5rem) 1rem;
   }
@@ -171,9 +180,12 @@ const places = summary.places.map((p: any) => p.name);
   const links = [...document.querySelectorAll<HTMLAnchorElement>('.letters a')];
   const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]!));
   const nf = new Intl.NumberFormat('en-US');
+  const initial = (name: string) => /^[a-z]/i.test(name) ? name[0].toUpperCase() : '#';
+  // Labels are "Surname, Given" or a bare surname, sometimes with an heirs/devisees note.
+  const surnameOfLabel = (label: string) => label.split(', ', 1)[0].replace(/ \((?:heirs?|devisees?) of\)$/i, '');
   let token = 0;
 
-  async function show(letter: string, prefix = '') {
+  async function show(letter: string, query = '', exact = false) {
     const mine = ++token;
     letter = letter.toUpperCase();
     links.forEach((a) => a.setAttribute('aria-current', String(a.dataset.letter === letter)));
@@ -185,7 +197,7 @@ const places = summary.places.map((p: any) => p.name);
     status.textContent = 'Loading…';
     let rows: Row[];
     try {
-      rows = await getJson<Row[]>(`names/${letter}.json`);
+      rows = await getJson<Row[]>(`names/${letter === '#' ? 'other' : letter}.json`);
     } catch {
       if (mine !== token) return;
       list.replaceChildren();
@@ -193,13 +205,15 @@ const places = summary.places.map((p: any) => p.name);
       return;
     }
     if (mine !== token) return;
-    const p = prefix.trim().toLowerCase();
-    const hits = p.length > 1 ? rows.filter((r) => r[0].toLowerCase().startsWith(p)) : rows;
+    const p = query.toLowerCase();
+    const hits = exact
+      ? rows.filter(([label]) => surnameOfLabel(label).toLowerCase() === p)
+      : p.length > 1 ? rows.filter(([label]) => label.toLowerCase().startsWith(p)) : rows;
     status.textContent = !hits.length
-      ? 'No matches. Try a shorter spelling.'
-      : p.length > 1
-        ? `${nf.format(hits.length)} name${hits.length === 1 ? '' : 's'} beginning “${prefix.trim()}”`
-        : `${nf.format(rows.length)} names under ${letter}`;
+      ? 'No matches. Try another spelling.'
+      : `${nf.format(hits.length)} name${hits.length === 1 ? '' : 's'}${exact
+        ? ` with the surname “${query}”`
+        : p.length > 1 ? ` beginning “${query}”` : ` under ${letter}`}`;
     list.innerHTML = hits.map(([label, id, year, place]) => `
       <li><a href="${BASE}/tract/?id=${encodeURIComponent(id)}">
         <span class="nm">${esc(label)}</span>
@@ -210,7 +224,8 @@ const places = summary.places.map((p: any) => p.name);
 
   const setUrl = (params: Record<string, string>) => {
     const q = new URLSearchParams(params).toString();
-    history.replaceState(null, '', q ? `?${q}` : location.pathname);
+    const hash = location.hash === '#names' ? '#names' : '';
+    history.replaceState(null, '', `${location.pathname}${q ? `?${q}` : ''}${hash}`);
   };
 
   let timer = 0;
@@ -236,15 +251,19 @@ const places = summary.places.map((p: any) => p.name);
     }
     timer = window.setTimeout(() => {
       setUrl({ q: v });
-      show(v[0], v);
+      show(initial(v), v);
     }, 140);
   });
 
   const params = new URLSearchParams(location.search);
+  const surname = params.get('surname')?.trim();
   const q = params.get('q')?.trim();
-  if (q) {
+  if (surname) {
+    input.value = surname;
+    show(initial(surname), surname, true);
+  } else if (q) {
     input.value = q;
-    show(q[0], q);
+    show(initial(q), q);
   } else if (params.get('l')) {
     show(params.get('l')!);
   }

@@ -12,6 +12,7 @@
 //   public/data/id/<nn>.json            tract id -> township key lookup shards
 //   public/data/search.json             compact search index
 //   public/data/names/<letter>.json     alphabetical index of patentees
+//   public/data/name-stats.json         counts for the Names page
 
 import { mkdir, readdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
@@ -25,6 +26,7 @@ import {
 } from './lib/lld.mjs';
 import { yearFromPatentNumber } from './lib/patent-dates.mjs';
 import { formatPatentee, indexLabel } from './lib/names.mjs';
+import { nameStats } from './lib/name-stats.mjs';
 import { PNG } from 'pngjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
@@ -484,6 +486,16 @@ for (const [letter, list] of byLetter) {
   nameLetters[letter] = list.length;
   await write(`names/${letter === '#' ? 'other' : letter}.json`, list);
 }
+
+// what the names add up to (Names page)
+const givenLists = await readJson(join(ROOT, 'data', 'given-names.json'));
+const themed = await readJson(join(ROOT, 'data', 'themed-surnames.json'));
+const stats = nameStats(tracts, { women: givenLists.women, men: givenLists.men, themed });
+if (stats.given.unlisted.length) {
+  console.log(`Common first names on neither list in data/given-names.json: ${stats.given.unlisted.map((g) => g.join(' ')).join(', ')}`);
+}
+delete stats.given.unlisted;
+await write('name-stats.json', stats);
 
 // summary
 const bboxOf = (list) => list.reduce(

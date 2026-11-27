@@ -1,0 +1,251 @@
+---
+import stats from '../../public/data/name-stats.json';
+
+type Rank = [name: string, count: number];
+const nf = new Intl.NumberFormat('en-US');
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+const surnameHref = (name: string) => `?surname=${encodeURIComponent(name)}#names`;
+const rankings = [
+  { id: 'surnames', title: 'Most common surnames', rows: stats.surnames.top as Rank[] },
+  { id: 'first-names', title: 'Most common first names', rows: stats.given.top as Rank[] },
+];
+---
+
+<section class="tallies" id="name-tallies" aria-labelledby="tallies-heading">
+  <div class="wrap">
+    <header class="tallies-head">
+      <div>
+        <p class="eyebrow">Name tallies</p>
+        <h2 id="tallies-heading">What the names <em>add up to</em></h2>
+      </div>
+      <p>
+        Of the <strong>{nf.format(stats.surnames.distinct)} different surnames</strong> in the patent index,{' '}
+        <strong>{nf.format(stats.surnames.once)}</strong> turn up just once.
+      </p>
+    </header>
+
+    <div class="rankings">
+      {rankings.map(({ id, title, rows }) => (
+        <section class="ranking" aria-labelledby={`${id}-heading`}>
+          <header>
+            <h3 id={`${id}-heading`}>{title}</h3>
+            <span class="label" aria-hidden="true">Count</span>
+          </header>
+          <ol>
+            {rows.slice(0, 8).map(([name, count]) => (
+              <li value={rows.findIndex(([, total]) => total === count) + 1}>
+                <div class="rank-row">
+                  {id === 'surnames' ? <a href={surnameHref(name)}>{name}</a> : <span>{name}</span>}
+                  <span class="bar-track" aria-hidden="true">
+                    <span style={`--share: ${count / rows[0][1] * 100}%`}></span>
+                  </span>
+                  <span class="mono count">{nf.format(count)}</span>
+                </div>
+              </li>
+            ))}
+          </ol>
+        </section>
+      ))}
+    </div>
+
+    <div class="curiosities">
+      <div>
+        <p class="label">In the same survey section</p>
+        <h3>Same surname, nearby land</h3>
+        <p>A shared surname doesn’t tell us whether the patentees were related.</p>
+        <ul class="neighbors" role="list">
+          {stats.sideBySide.top.slice(0, 3).map(({ surname, n, twpLabel, sec, id }) => (
+            <li>
+              <a href={`${base}/tract/?id=${encodeURIComponent(id)}`}>{surname}</a>
+              <span>{n} tracts · {twpLabel}, sec. {sec}</span>
+            </li>
+          ))}
+        </ul>
+      </div>
+      <div>
+        <p class="label">From the margins</p>
+        <h3>Moon, Fox &amp; Paradise</h3>
+        <p>Names that read like a desert field guide, from the weather overhead to the ground underfoot.</p>
+        <details>
+          <summary>Surnames that sound like the desert</summary>
+          <dl>
+            {stats.themed.map(({ title, names }) => (
+              <div>
+                <dt class="label">{title}</dt>
+                <dd>
+                  {(names as Rank[]).map(([name, count], i) => (
+                    <>{i > 0 && ', '}<a href={surnameHref(name)}>{name}</a> ({nf.format(count)})</>
+                  ))}
+                </dd>
+              </div>
+            ))}
+          </dl>
+        </details>
+        {stats.surnames.shortest.length === 1 && (
+          <p class="shortest">Shortest surname: <a href={surnameHref(stats.surnames.shortest[0])}>{stats.surnames.shortest[0]}</a>.</p>
+        )}
+      </div>
+    </div>
+
+    <p class="method">
+      These are counts from the BLM patent index, not a census of distinct people. Surnames are tallied as
+      indexed. For first names, we skip initials and count likely alternate entries on the same patent once.
+      Neither ranking includes organizations.
+    </p>
+  </div>
+</section>
+
+<style>
+  .tallies {
+    margin-top: clamp(2.5rem, 6vw, 4.5rem);
+    padding-block: clamp(2.5rem, 6vw, 4.5rem);
+    background: var(--paper-2);
+    border-block: 1px solid var(--rule);
+  }
+  .tallies-head {
+    display: grid;
+    grid-template-columns: minmax(0, 1.25fr) minmax(0, 0.75fr);
+    align-items: end;
+    gap: 0.8rem 3rem;
+    margin-bottom: 1.75rem;
+  }
+  .tallies-head h2 {
+    font-size: clamp(1.9rem, 1.3rem + 2.8vw, 3.55rem);
+    text-wrap: wrap;
+  }
+  .tallies-head > p {
+    margin: 0;
+    max-width: 35ch;
+    color: var(--ink-2);
+  }
+  .rankings {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    border: 1px solid var(--rule-strong);
+    background: var(--paper);
+  }
+  .ranking {
+    --bar-color: var(--ochre);
+    padding: clamp(0.95rem, 2.5vw, 2rem);
+  }
+  .ranking + .ranking {
+    --bar-color: var(--sage);
+    border-inline-start: 1px solid var(--rule-strong);
+  }
+  .ranking header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.65rem;
+    padding-bottom: 0.7rem;
+    border-bottom: 1px solid var(--rule-strong);
+  }
+  .ranking h3, .curiosities h3 {
+    font-size: clamp(1.2rem, 1rem + 0.75vw, 1.65rem);
+    text-wrap: wrap;
+  }
+  .ranking ol {
+    margin: 0;
+    padding-inline-start: 2.05rem;
+  }
+  .ranking li {
+    border-bottom: 1px solid var(--rule);
+    padding: 0.37rem 0;
+  }
+  .ranking li::marker {
+    color: var(--ink-3);
+    font: 0.78rem var(--font-mono);
+  }
+  .rank-row {
+    display: grid;
+    grid-template-columns: minmax(6.1em, auto) minmax(0, 1fr) 3.8ch;
+    align-items: center;
+    gap: 0.45rem;
+    font-family: var(--font-display);
+  }
+  .rank-row a {
+    justify-self: start;
+  }
+  .bar-track {
+    height: 0.5rem;
+    background: var(--paper-3);
+  }
+  .bar-track span {
+    display: block;
+    width: var(--share);
+    height: 100%;
+    background: var(--bar-color);
+  }
+  .count {
+    justify-self: end;
+  }
+  .curiosities {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 2rem clamp(2rem, 5vw, 4rem);
+    margin-top: clamp(1.8rem, 4vw, 3rem);
+  }
+  .curiosities .label {
+    margin-bottom: 0.5rem;
+    color: var(--ochre);
+  }
+  .curiosities h3 + p {
+    margin: 0.5rem 0 0.8rem;
+    color: var(--ink-2);
+  }
+  .neighbors {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+  .neighbors li {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 0 1rem;
+    padding: 0.3rem 0;
+    border-top: 1px solid var(--rule);
+  }
+  .neighbors span {
+    color: var(--ink-2);
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+  }
+  details {
+    border-block: 1px solid var(--rule);
+  }
+  summary {
+    padding: 0.45rem 0;
+    cursor: pointer;
+    color: var(--ochre-deep);
+  }
+  dl {
+    margin: 0.3rem 0 0.8rem;
+  }
+  dl div + div {
+    margin-top: 0.65rem;
+  }
+  dd {
+    margin: 0;
+    font-size: 0.93em;
+  }
+  .shortest {
+    margin: 0.65rem 0 0;
+  }
+  .method {
+    max-width: 75ch;
+    margin: 1.8rem 0 0;
+    color: var(--ink-2);
+    font-size: 0.85em;
+  }
+  @media (max-width: 720px) {
+    .tallies-head, .rankings, .curiosities {
+      grid-template-columns: minmax(0, 1fr);
+    }
+    .ranking + .ranking {
+      border-inline-start: 0;
+      border-top: 1px solid var(--rule-strong);
+    }
+  }
+</style>

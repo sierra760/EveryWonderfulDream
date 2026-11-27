@@ -11,7 +11,7 @@ Wonder Valley, California.
 | `/` | Dusk flyover of Wonder Valley, the numbers, patents per year, featured places, an annotated patent |
 | `/atlas/` | Full-screen 3D map of all tracts with search, layers (survey grid, classified land, color by year, topo) |
 | `/tract/?id=CALA-0060931` | One page per tract: orbiting 3D view, facts, patent abstract, section and township diagrams, neighbors, research links |
-| `/names/` | A–Z index of the 22,858 people named on the patents, searchable by surname |
+| `/names/` | Searchable A–Z patent index, name rankings, and same-surname clusters |
 | `/places/` | The communities, each drawn as a dot map of its tracts |
 | `/history/`, `/resources/`, `/about/` | The story, other people's work, sources and method |
 
@@ -26,6 +26,8 @@ npm run dev        # http://localhost:4321
 npm run build      # static site in dist/
 npm test           # unit tests for the legal-description parser, date estimator and name formatter
 ```
+
+After building, run `node tests/names-page.browser.mjs` to check the Names rankings and search in Google Chrome.
 
 ## The data
 

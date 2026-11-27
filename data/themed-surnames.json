@@ -1,0 +1,7 @@
+[
+  { "title": "Sky and weather", "names": ["Sun", "Sunshine", "Moon", "Star", "Starr", "Day", "Sunday", "Summers", "Winter", "Winters", "Frost", "Snow", "Storm", "Rainwater", "Flood"] },
+  { "title": "Ground", "names": ["Stone", "Rock", "Sands", "Flint", "Clay", "Hill", "Field", "Fields", "Land", "Wells", "Lake", "Marsh", "Dry"] },
+  { "title": "Creatures", "names": ["Hare", "Fox", "Wolf", "Wolfe", "Crow", "Hawk", "Bird", "Lamb"] },
+  { "title": "What grows", "names": ["Sage", "Rose", "Bloom", "Flowers", "Thorne"] },
+  { "title": "Hopes", "names": ["Paradise", "Love", "Joy", "Bliss", "Gold", "Silver", "Diamond", "Rich", "Dollar", "House", "Camp", "Settle"] }
+]
